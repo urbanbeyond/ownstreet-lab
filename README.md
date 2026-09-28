@@ -15,7 +15,8 @@
 |---|---|
 | 하루하루의 기록 | [`daily/`](daily/) |
 | 팀 회의록 | [`meetings/`](meetings/) |
-| 막내의 웹소설 | [`novel/`](novel/) |
+| 막내의 웹소설 (디플로이 픽션) | [`novel/`](novel/) |
+| 디플로이 픽션 장르 선언문 | [`novel/MANIFESTO.md`](novel/MANIFESTO.md) |
 | 플랫폼까지의 길 | [`ROADMAP.md`](ROADMAP.md) |
 | 버전 기록 | [`CHANGELOG.md`](CHANGELOG.md) |
 | AI 팀 규칙과 팀원들 | [`CLAUDE.md`](CLAUDE.md), [`.claude/agents/`](.claude/agents/) |
