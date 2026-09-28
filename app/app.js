@@ -278,7 +278,7 @@ async function onSubmit(e) {
   if (!data.name) errors.push(['name', '이름을 입력해주세요.']);
   if (!rawPhone) errors.push(['phone', '전화번호를 입력해주세요.']);
   else if (!data.phone) errors.push(['phone', '전화번호를 다시 확인해주세요. 예) 010-1234-5678']);
-  if (!rawUrl) errors.push(['url', '원하는 이미지의 URL을 입력해주세요.']);
+  if (!rawUrl) errors.push(['url', '생성한 이미지의 URL을 입력해주세요.']);
   else if (!data.url) errors.push(['url', '주소 형식이 올바르지 않습니다. https:// 로 시작하는 주소를 붙여넣어 주세요.']);
   if (!$('consent').checked) errors.push(['consent', '개인정보 수집 및 이용에 동의해주세요.']);
 
@@ -396,8 +396,25 @@ function setSending(on) {
 
 /* ---------------- 완료 / 복사 ---------------- */
 
+function formatWon(n) {
+  return Number(n).toLocaleString('ko-KR') + '원';
+}
+
 function showComplete(id) {
   $('receiptNo').textContent = id;
+  const pay = CFG.payment || {};
+  const link = String(pay.kakaopayLink || '').trim();
+  if (pay.price && /^https:\/\//.test(link)) {
+    $('payAmount').textContent = formatWon(pay.price);
+    $('payRef').textContent = id;
+    $('payLink').href = link;
+    const qr = $('payQr');
+    if (pay.kakaopayQr) { qr.src = pay.kakaopayQr; qr.hidden = false; $('payQr').nextElementSibling.hidden = false; }
+    else { qr.hidden = true; $('payQr').nextElementSibling.hidden = true; }
+    $('payBox').hidden = false;
+  } else {
+    $('payBox').hidden = true;
+  }
   $('copyBtn').textContent = 'COPY';
   $('copyMsg').textContent = '';
   $('completeDialog').showModal();
@@ -565,20 +582,18 @@ function renderStaticInfo() {
 
   // PRIVACY / CONTACT
   $('retentionText').textContent = String(CFG.privacyRetention || '').trim() || '[보유 기간 입력 필요]';
-  const contact = $('contactText');
-  const email = String(CFG.contactEmail || '').trim();
-  if (email) {
-    contact.append('문의는 아래 이메일로 보내주세요. 접수번호를 함께 적어주시면 빠르게 확인할 수 있습니다.');
-    const p = document.createElement('p');
-    const a = document.createElement('a');
-    a.href = 'mailto:' + email;
-    a.textContent = email;
-    a.className = 'strong';
-    p.appendChild(a);
-    contact.after(p);
-  } else {
-    contact.textContent = '문의처를 준비하고 있습니다.';
+  // PRICE
+  const pay = CFG.payment || {};
+  if (pay.price) {
+    $('priceName').textContent = pay.productName || '';
+    $('priceAmount').textContent = formatWon(pay.price);
+    $('priceDesc').textContent = [pay.description, '접수 완료 후 카카오페이로 결제'].filter(Boolean).join(' · ');
+    $('priceBox').hidden = false;
   }
+
+  // CONTACT → 카카오톡 채널 채팅
+  const contactUrl = String(CFG.contactUrl || '').trim();
+  if (/^https:\/\//.test(contactUrl)) $('contactLink').href = contactUrl;
 }
 
 function fillList(id, items) {

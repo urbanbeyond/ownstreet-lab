@@ -10,24 +10,19 @@
 OWN STREET는 그 비전이 실제 서비스가 되는 곳이다.
 
 ## 현재 버전 (v0) — 출발점
-- 실제 운영 중인 서비스다. 실제 고객이 요청을 넣는다.
-- 원 페이지 모바일 웹: Google 로그인 → 이름·전화번호·생성한 이미지(채팅)의 URL 입력 → 커스텀 티셔츠 제작 요청
+- 실제 운영 중인 서비스다. 실제 고객이 요청하고 실제로 결제한다.
+- 원 페이지 모바일 웹: Google 로그인 → 이름·전화번호·생성한 이미지가 있는 채팅 링크(공개) 입력 → 커스텀 티셔츠 제작 요청
 - 접수번호(OS-0001…)는 백엔드가 저장을 확인한 뒤에만 발급한다. **가짜 로그인, 가짜 성공, 임의 접수번호는 절대 만들지 않는다.**
-- 사이즈표(피그먼트 반팔 S–3XL)와 안내 문구는 `config.js` 에서 관리한다.
+- 상품: STANDARD 35,000원(뒷면 프린트 기준), 피그먼트 반팔 S–3XL, 면 100%, **DTF 프린트만, PNG 만**
+- 결제: 접수 완료 화면에서 카카오페이 버튼·QR 로 안내 (`config.js` 의 `payment`, `kakaopay-qr.svg`)
+- 문의: 카카오톡 채널 채팅 (`config.js` 의 `contactUrl`)
+- 사이즈표와 안내 문구(품질·세탁·가이드·유의사항)는 `config.js` 에서 관리한다.
 - 구조
-  - `app/` — 프론트엔드 (index.html, styles.css, app.js, config.js, vendor/firebase)
+  - `app/` — 프론트엔드 (index.html, styles.css, app.js, config.js, kakaopay-qr.svg, vendor/firebase)
   - `backend/Code.gs` — Google Apps Script. 로그인 토큰 검증, 접수번호 발급, 스프레드시트 저장
   - 로그인: Firebase Authentication (Google)
   - 호스팅: Netlify
   - `docs/OWN_STREET_설정가이드.md` — v0 를 처음 세팅할 때의 운영자 안내서
-
-### 운영자가 정했지만 v0 에 아직 반영되지 않은 것
-- 상품: 피그먼트 반팔(S–3XL), 면 100%, **프린트는 DTF 만**, 이미지는 **PNG 만** 받는다.
-  (지금 `config.js` 안내 문구에는 "DTG/엠보싱/실리콘", "PNG, JPG" 로 남아 있다. 입력 오류 문구에도 "원하는 이미지" 가 남아 있다.)
-- 가격: STANDARD 35,000원 (뒷면 프린트 기준)
-- 결제: 사이트에 가격을 보여주고, 접수 후 카카오페이 버튼·QR 로 안내한다. **카카오페이 링크는 운영자가 `config.js` 에 넣는다.**
-- 고객 문의: 카카오톡 채널 채팅으로 연결한다.
-이 항목들이 첫 주의 자연스러운 출발점이다.
 
 ## 디자인 시스템 (지킨다)
 - 배경 오프화이트 `#F6F3ED`, 글자 거의 검정 `#13161B`, 포인트 시그널 오렌지 `#F85003`
@@ -38,7 +33,7 @@ OWN STREET는 그 비전이 실제 서비스가 되는 곳이다.
 - AI 팀의 모든 작업은 먼저 **LAB 사이트**에 자동 배포된다. LAB 은 누구나 볼 수 있는 공개 실험실이다.
 - **LIVE(실제 고객이 쓰는 사이트)는 운영자가 버튼을 눌러야만 바뀐다.** AI 팀은 LIVE 를 직접 바꿀 수 없다.
 - LAB 배포 시 워크플로가 자동으로 백엔드 주소를 LAB 전용으로 바꾸고, 결제 링크·QR 을 막고, "LAB" 배너를 붙인다.
-- 그러므로 AI 팀은 `config.js` 의 Apps Script 주소, Firebase 설정, 카카오페이 링크·QR 파일을 **바꾸지 않는다.** 필요하면 OPERATOR_TODO.md 에 요청한다.
+- 그러므로 AI 팀은 `config.js` 의 `requestEndpoint`(Apps Script 주소), `firebase` 설정, `payment.kakaopayLink`, `contactUrl`, 그리고 `kakaopay-qr.svg` 파일을 **바꾸지 않는다.** 필요하면 OPERATOR_TODO.md 에 요청한다.
 
 ## 백엔드와 사람의 손
 - `backend/Code.gs` 를 고칠 수는 있지만 **배포는 사람이 한다.** 고쳤다면 `OPERATOR_TODO.md` 에 "무엇을 왜 배포해야 하는지"를 적는다.

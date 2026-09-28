@@ -25,8 +25,8 @@ window.OWN_STREET_CONFIG = {
   //    Apps Script를 "새 배포"로 올려 주소가 바뀌었다면 여기를 바꾸세요.
   requestEndpoint: 'https://script.google.com/macros/s/AKfycbxmtj6Pi5mBlwZSBJdD5247W6U5aOU_-sHmoalYTQQT6dVNzW80seV7m2NvHo0OSkgM_Q/exec',
 
-  // ③ 문의 이메일 (하단 Contact에 표시). 비워두면 "등록 전"으로 표시됩니다.
-  contactEmail: '',
+  // ③ 문의 (하단 Contact를 누르면 이 주소로 이동 — 카카오톡 채널 채팅)
+  contactUrl: 'https://pf.kakao.com/_nxaEJG/chat',
 
   // ④ 개인정보 보유 기간 (예: '요청 처리 완료 후 1년' 처럼 운영 방침에 맞게 직접 작성)
   privacyRetention: '',
@@ -47,12 +47,22 @@ window.OWN_STREET_CONFIG = {
     note: '단위 cm · 측정 방식에 따라 1~3cm 정도 차이가 생길 수 있으며, 제품의 단면을 기준으로 측정했습니다. 모니터 사양 또는 해상도에 따라 색상 차이가 있을 수 있습니다.'
   },
 
+  // ⑦ 가격 · 결제 (카카오페이 송금)
+  //    kakaopayLink: [카카오페이로 결제하기] 버튼이 여는 주소
+  //    kakaopayQr:   완료 화면에 보이는 QR 그림 파일 (site 폴더 안의 kakaopay-qr.svg)
+  payment: {
+    productName: 'STANDARD',
+    description: '뒷면 프린트 기준',
+    price: 35000,
+    kakaopayLink: 'https://qr.kakaopay.com/Ej9FTP16i445c08554',
+    kakaopayQr: 'kakaopay-qr.svg'
+  },
+
   // ⑥ 안내 문구 (아코디언). 한 줄이 목록 한 칸입니다. 줄을 추가·삭제해도 됩니다.
-  //    ※ 아래 문구는 Lovable 디자인에 들어 있던 내용입니다. 실제 기준과 다르면 고쳐주세요.
   quality: [
-    '소재: 면 100% (코마사 30수/40수 단면면)',
+    '소재: 면 100%',
     '원단: 내구성 높은 신축성 니트 원단, 촉감 부드러움',
-    '프린팅 방식: DTG(직접 프린트) / 엠보싱 / 실리콘 프린트 선택 가능'
+    '프린팅 방식: DTF(전사지) only'
   ],
   care: [
     '30도 이하 미지근한 물에 뒤집어서 단독 세탁',
@@ -61,9 +71,9 @@ window.OWN_STREET_CONFIG = {
     '다림질 시 프린트 부분 피하기'
   ],
   guide: [
-    'URL 제출: 이미지가 열리는 공개 링크만 전달 (구글 드라이브 공유 링크 등)',
-    '권장 품질: 1500px 이상, 300dpi 권장 / PNG, JPG',
-    '제작 범위: 앞/뒤 단일 프린트, 최대 A3 사이즈'
+    'URL 제출: 생성한 이미지가 있는 채팅 링크(공개)만 전달 (불펌 이미지 불가)',
+    '권장 품질: 1500px 이상, 300dpi, 실제 크기(cm) 권장 / PNG포맷 Only',
+    '제작 범위: 뒷면 단일 프린트, 최대 A3 사이즈'
   ],
   notice: [
     '사용 권한: 제출한 이미지의 사용 권한은 신청자에게 있으며, 타인 저작권 침해 시 책임은 신청자에게 있습니다.',

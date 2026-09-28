@@ -221,6 +221,18 @@ img, svg { display: block; }
 .btn-request:disabled { opacity: .6; cursor: not-allowed; }
 @media (prefers-reduced-motion: reduce) { .btn, .btn-request, .acc-sign { transition: none !important; } }
 
+/* ---------- Price ---------- */
+.price-box {
+  border: 2px solid var(--foreground);
+  background: var(--card);
+  padding: 14px 16px;
+  box-shadow: 4px 4px 0 0 var(--foreground);
+}
+.price-row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.price-name { font-size: 18px; line-height: 28px; text-transform: uppercase; letter-spacing: 0.05em; }
+.price-amount { font-size: 26px; line-height: 32px; letter-spacing: 0.02em; color: var(--accent); white-space: nowrap; }
+.price-desc { margin-top: 4px; font-size: 13px; line-height: 1.6; color: var(--muted-foreground); }
+
 /* ---------- Accordion ---------- */
 .accordion {
   margin-top: 32px; max-width: 672px;
@@ -259,6 +271,8 @@ details[open] .acc-sign { transform: rotate(45deg); }
 .footer { padding: 48px 16px; }
 @media (min-width: 640px) { .footer { padding: 48px 32px; } }
 .footer-links { display: flex; flex-wrap: wrap; gap: 8px 24px; font-size: 14px; line-height: 20px; text-transform: uppercase; letter-spacing: 0.05em; }
+.footer-links a { color: inherit; text-decoration: none; display: inline-flex; align-items: center; min-height: 32px; }
+.footer-links a:hover { color: var(--accent); }
 .footer-links button { padding: 0; border: 0; background: none; cursor: pointer; font: inherit; letter-spacing: inherit; text-transform: inherit; min-height: 32px; }
 .footer-links button:hover { color: var(--accent); }
 .footer-copy {
@@ -306,5 +320,26 @@ details[open] .acc-sign { transform: rotate(45deg); }
 .btn-modal:active { transform: translate(4px, 4px); }
 .btn-modal-ink { background: var(--foreground); color: var(--background); }
 .btn-modal-line { background: var(--background); color: var(--foreground); }
+.pay-box { margin-top: 20px; border-top: 2px solid var(--foreground); padding-top: 16px; display: grid; gap: 10px; justify-items: center; text-align: center; }
+.pay-head { width: 100%; display: flex; align-items: baseline; justify-content: space-between; }
+.pay-head .modal-sub { margin-top: 0; }
+.pay-amount { font-size: 26px; line-height: 32px; letter-spacing: 0.02em; color: var(--accent); }
+.pay-guide { width: 100%; text-align: left; font-size: 14px; line-height: 1.6; }
+.pay-guide strong { font-weight: 700; }
+.btn-kakaopay {
+  width: 100%;
+  display: block;
+  border: 2px solid var(--foreground);
+  background: #FEE500;
+  color: #191600;
+  padding: 12px 24px;
+  box-shadow: 4px 4px 0 0 var(--foreground);
+  font-size: 16px; font-weight: 700; line-height: 22px;
+  text-decoration: none;
+  transition: transform .06s ease, box-shadow .06s ease;
+}
+.btn-kakaopay:active { transform: translate(4px, 4px); box-shadow: none; }
+.pay-qr { margin-top: 6px; width: 148px; height: 148px; border: 2px solid var(--foreground); background: #fff; padding: 4px; }
+.pay-qr-note { font-size: 12px; color: var(--muted-foreground); }
 .copy-msg { margin-top: 10px; font-size: 13px; color: var(--muted-foreground); }
 .copy-msg:empty { display: none; }
