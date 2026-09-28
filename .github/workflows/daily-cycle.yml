@@ -1,0 +1,132 @@
+name: Daily Lab Cycle
+
+# 매일 새벽 4시(한국 시간): AI 팀이 하루치 작업을 하고, LAB 사이트에 배포하고, 포스트를 준비한다.
+# 발행은 publish.yml 이 아침 7시에 한다. LIVE 반영은 promote-live.yml (운영자 버튼).
+on:
+  schedule:
+    - cron: "0 19 * * *"   # UTC 19:00 = KST 04:00
+  workflow_dispatch: {}     # Actions 탭에서 수동 실행
+
+permissions:
+  contents: write
+  id-token: write
+
+concurrency:
+  group: daily-cycle
+  cancel-in-progress: false
+
+env:
+  TZ: Asia/Seoul
+
+jobs:
+  cycle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 100
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check PAUSE switch
+        id: pause
+        run: |
+          if [ -f PAUSE ]; then echo "paused=true" >> "$GITHUB_OUTPUT"; echo "PAUSE — 오늘은 쉼"; else echo "paused=false" >> "$GITHUB_OUTPUT"; fi
+
+      - name: Set up Python
+        if: steps.pause.outputs.paused == 'false'
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install tools
+        if: steps.pause.outputs.paused == 'false'
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq fonts-noto-cjk libcairo2 > /dev/null
+          pip install -q requests pillow cairosvg playwright
+          python -m playwright install --with-deps chromium > /dev/null
+
+      - name: Decide today (date, mode)
+        if: steps.pause.outputs.paused == 'false'
+        id: today
+        run: |
+          D=$(date +%F)
+          PREV=$(find daily -mindepth 1 -maxdepth 1 -type d -name '20*' ! -name "$D" | wc -l)
+          if [ "$(date +%u)" = "1" ] || [ "$PREV" = "0" ]; then MODE=meeting; else MODE=work; fi
+          mkdir -p "daily/$D"
+          echo "date=$D" >> "$GITHUB_OUTPUT"
+          echo "mode=$MODE" >> "$GITHUB_OUTPUT"
+          echo "오늘: $D / 모드: $MODE"
+
+      - name: Collect comments from recent posts
+        if: steps.pause.outputs.paused == 'false'
+        continue-on-error: true
+        env:
+          META_ACCESS_TOKEN: ${{ secrets.META_ACCESS_TOKEN }}
+        run: python scripts/fetch_feedback.py
+
+      - name: Build today's prompt
+        if: steps.pause.outputs.paused == 'false'
+        id: prompt
+        run: |
+          {
+            echo "prompt<<__PROMPT__"
+            echo "TODAY: ${{ steps.today.outputs.date }}"
+            echo "MODE: ${{ steps.today.outputs.mode }}"
+            echo
+            cat scripts/daily_prompt.txt
+            echo "__PROMPT__"
+          } >> "$GITHUB_OUTPUT"
+
+      # AI 단계에는 Meta·Netlify 토큰과 LAB 주소를 넘기지 않는다
+      - name: Run AI team
+        if: steps.pause.outputs.paused == 'false'
+        continue-on-error: true
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          prompt: ${{ steps.prompt.outputs.prompt }}
+          claude_args: |
+            --model claude-sonnet-5
+            --max-turns 60
+            --allowedTools "Read,Write,Edit,MultiEdit,Glob,Grep,Bash,Agent,Task,TodoWrite"
+
+      - name: Check app health (for tomorrow's PM)
+        if: steps.pause.outputs.paused == 'false'
+        run: python scripts/check_app.py --report "daily/${{ steps.today.outputs.date }}/lab_status.md"
+
+      - name: Build LAB version (swap backend, block payment, add banner)
+        if: steps.pause.outputs.paused == 'false'
+        id: lab
+        continue-on-error: true
+        env:
+          LAB_APPS_SCRIPT_URL: ${{ secrets.LAB_APPS_SCRIPT_URL }}
+        run: python scripts/build_lab.py
+
+      - name: Screenshot LAB (mobile)
+        if: steps.pause.outputs.paused == 'false' && steps.lab.outcome == 'success'
+        continue-on-error: true
+        run: python scripts/screenshot.py
+
+      - name: Prepare hero image
+        if: steps.pause.outputs.paused == 'false'
+        run: python scripts/prepare_hero.py
+
+      - name: Commit today's work
+        if: steps.pause.outputs.paused == 'false'
+        run: |
+          git config user.name "ownstreet-ai-team"
+          git config user.email "ai-team@users.noreply.github.com"
+          git add -A
+          git commit -m "Day ${{ steps.today.outputs.date }} (${{ steps.today.outputs.mode }})" || echo "변경 없음"
+          git push
+
+      - name: Deploy to LAB site
+        if: steps.pause.outputs.paused == 'false' && steps.lab.outcome == 'success'
+        continue-on-error: true
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_LAB_SITE_ID: ${{ secrets.NETLIFY_LAB_SITE_ID }}
+        run: |
+          if [ -z "$NETLIFY_AUTH_TOKEN" ] || [ -z "$NETLIFY_LAB_SITE_ID" ]; then echo "Netlify 설정 없음 — LAB 배포 건너뜀"; exit 0; fi
+          npx -y netlify-cli@latest deploy --dir=build/lab --prod \
+            --site="$NETLIFY_LAB_SITE_ID" --auth="$NETLIFY_AUTH_TOKEN" \
+            --message="LAB ${{ steps.today.outputs.date }}"

@@ -1,0 +1,79 @@
+name: Promote LAB to LIVE
+
+# 운영자만 누르는 버튼. 지금 app/ 의 상태를 실제 고객이 쓰는 LIVE 사이트에 반영한다.
+# Actions 탭 → Promote LAB to LIVE → Run workflow → 확인란에 LIVE 입력
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: "실제 서비스에 반영하려면 LIVE 라고 입력"
+        required: true
+      note:
+        description: "반영 메모 (선택, 공개 기록에 남음)"
+        required: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: promote-live
+  cancel-in-progress: false
+
+env:
+  TZ: Asia/Seoul
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Confirm
+        run: |
+          if [ "${{ github.event.inputs.confirm }}" != "LIVE" ]; then echo "확인 문구가 LIVE 가 아님 — 중단"; exit 1; fi
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Health check (문제 있으면 반영하지 않음)
+        run: python scripts/check_app.py --strict
+
+      - name: Safety check (LAB 설정이 섞여 있지 않은지)
+        env:
+          LAB_APPS_SCRIPT_URL: ${{ secrets.LAB_APPS_SCRIPT_URL }}
+        run: |
+          if [ -n "$LAB_APPS_SCRIPT_URL" ] && grep -rqF "$LAB_APPS_SCRIPT_URL" app/; then
+            echo "app/ 안에 LAB 백엔드 주소가 들어 있음 — LIVE 반영 중단"; exit 1; fi
+          if grep -rq 'id="lab-banner"' app/; then
+            echo "app/ 안에 LAB 배너가 들어 있음 — LIVE 반영 중단"; exit 1; fi
+          if ! grep -rqE 'https://script\.google\.com/macros/s/[A-Za-z0-9_-]+/exec' app/; then
+            echo "app/ 에서 백엔드 주소를 찾지 못함 — LIVE 반영 중단"; exit 1; fi
+          echo "안전 검사 통과"
+
+      - name: Deploy to LIVE
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_LIVE_SITE_ID: ${{ secrets.NETLIFY_LIVE_SITE_ID }}
+        run: |
+          npx -y netlify-cli@latest deploy --dir=app --prod \
+            --site="$NETLIFY_LIVE_SITE_ID" --auth="$NETLIFY_AUTH_TOKEN" \
+            --message="LIVE $(date +%F)"
+
+      - name: Record in CHANGELOG
+        run: |
+          VER=$(grep -m1 -oE '^- v[0-9]+\.[0-9]+' CHANGELOG.md | sed 's/^- //' || true)
+          NOTE="${{ github.event.inputs.note }}"
+          LINE="- [LIVE] $(date +%F) — ${VER:-현재 버전} 이 실제 서비스에 반영됨${NOTE:+ ($NOTE)}"
+          python3 - "$LINE" <<'PY'
+          import sys, pathlib
+          p = pathlib.Path("CHANGELOG.md"); t = p.read_text(encoding="utf-8")
+          marker = "## 기록\n\n"
+          p.write_text(t.replace(marker, marker + sys.argv[1] + "\n", 1), encoding="utf-8")
+          PY
+          git config user.name "ownstreet-operator"
+          git config user.email "operator@users.noreply.github.com"
+          git add CHANGELOG.md
+          git commit -m "LIVE $(date +%F)"
+          git push

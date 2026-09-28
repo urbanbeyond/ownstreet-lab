@@ -1,0 +1,48 @@
+name: Morning Publish
+
+# 매일 아침 7시(한국 시간)에 새벽에 준비된 포스트를 인스타그램·페이스북에 올린다.
+# AI 를 쓰지 않으므로 Claude 사용량을 소모하지 않는다.
+on:
+  schedule:
+    - cron: "0 22 * * *"   # UTC 22:00 = KST 07:00
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish
+  cancel-in-progress: false
+
+env:
+  TZ: Asia/Seoul
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: pip install -q requests
+
+      - name: Publish to Instagram & Facebook
+        env:
+          META_ACCESS_TOKEN: ${{ secrets.META_ACCESS_TOKEN }}
+          IG_USER_ID: ${{ secrets.IG_USER_ID }}
+          FB_PAGE_ID: ${{ secrets.FB_PAGE_ID }}
+          RAW_BASE: https://raw.githubusercontent.com/${{ github.repository }}/${{ github.ref_name }}
+        run: python scripts/publish_post.py
+
+      - name: Save post IDs (for tomorrow's comment collection)
+        if: always()
+        run: |
+          git config user.name "ownstreet-ai-team"
+          git config user.email "ai-team@users.noreply.github.com"
+          git add daily/
+          git commit -m "Published $(date +%F)" || echo "변경 없음"
+          git push
