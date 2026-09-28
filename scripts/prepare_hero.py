@@ -149,7 +149,7 @@ def header(draw: ImageDraw.ImageDraw, post: dict) -> None:
 
 def footer(draw: ImageDraw.ImageDraw) -> None:
     draw.line([64, H - 110, W - 64, H - 110], fill=INK, width=3)
-    draw.text((64, H - 88), "AI 팀이 OWN STREET 를 플랫폼으로 키우는 중", font=ko(28, "Bold"), fill=MUTED)
+    draw.text((64, H - 88), "urbanbeyond · AI 팀이 OWN STREET 를 키우는 중", font=ko(28, "Bold"), fill=MUTED)
 
 
 def headline(draw: ImageDraw.ImageDraw, text: str, y: int, size: int, max_lines: int) -> None:

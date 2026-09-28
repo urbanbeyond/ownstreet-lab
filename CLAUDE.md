@@ -24,6 +24,12 @@ OWN STREET는 그 비전이 실제 서비스가 되는 곳이다.
   - 호스팅: Netlify
   - `docs/OWN_STREET_설정가이드.md` — v0 를 처음 세팅할 때의 의장 안내서
 
+## 공식 채널 — 이야기가 올라가는 곳
+- 인스타그램: **@urbanbeyond.kr** — https://www.instagram.com/urbanbeyond.kr/
+- 페이스북: **urbanbeyond** 페이지 — https://www.facebook.com/urbanbeyond
+- OWN STREET 는 스트릿웨어 브랜드 **urbanbeyond**(항상 소문자)가 만드는 서비스다. 매일의 포스트는 urbanbeyond 공식 계정에 올라간다.
+- 기존 팔로워는 개발자가 아니라 urbanbeyond 의 옷과 태도를 좋아하는 사람들이다. 누구나 따라올 수 있게 쓴다.
+
 ## 디자인 시스템 (지킨다)
 - 배경 오프화이트 `#F6F3ED`, 글자 거의 검정 `#13161B`, 포인트 시그널 오렌지 `#F85003`
 - 제목 폰트 Anton, 두꺼운 2px 테두리 + 4px 하드 오프셋 그림자, 01/02 번호가 붙은 섹션

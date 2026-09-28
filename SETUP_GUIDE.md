@@ -58,12 +58,14 @@ Firebase 콘솔 → ownstreet 프로젝트 → Authentication → Settings → *
 
 ## 6. 인스타그램 · 페이스북 (30분~1시간, 최초 1회)
 
-열쇠 하나로 인스타와 페북을 함께 여는 방식입니다 (페이스북 로그인 방식).
+urbanbeyond 공식 계정을 그대로 씁니다. 열쇠 하나로 인스타와 페북을 함께 여는 방식입니다 (페이스북 로그인 방식).
+- 인스타그램: @urbanbeyond.kr — https://www.instagram.com/urbanbeyond.kr/
+- 페이스북: urbanbeyond 페이지 — https://www.facebook.com/urbanbeyond
 
-1. 인스타그램을 **프로페셔널 계정 → 비즈니스**로 전환 (크리에이터도 되지만 비즈니스가 가장 무난)
-2. 페이스북 **페이지**를 만들고, 인스타그램 설정의 계정 센터에서 그 페이지와 연결
-3. developers.facebook.com 에서 앱 만들기 (의장 본인 페이스북 계정으로. 본인이 앱 관리자면 본인 계정에는 보통 심사 없이 쓸 수 있음)
-4. 그래프 API 탐색기에서 아래 권한으로 사용자 토큰 발급 → **장기 토큰으로 교환** → `/me/accounts` 로 **페이지 토큰**을 받음
+1. @urbanbeyond.kr 이 **프로페셔널 계정(비즈니스)** 인지 확인. 아니면 인스타 앱 → 설정 및 활동 → 계정 유형 및 도구 → 프로페셔널 계정으로 전환 → 비즈니스
+2. @urbanbeyond.kr 이 **urbanbeyond 페이스북 페이지와 연결**되어 있는지 확인. 아니면 https://business.facebook.com 설정 → 계정 → Instagram 계정에서 연결
+3. https://developers.facebook.com/apps 에서 앱 만들기 (의장 본인 페이스북 계정으로. 본인이 앱 관리자면 본인 계정에는 보통 심사 없이 쓸 수 있음)
+4. 그래프 API 탐색기(https://developers.facebook.com/tools/explorer)에서 아래 권한으로 사용자 토큰 발급 → 토큰 디버거(https://developers.facebook.com/tools/debug/accesstoken)에서 **장기 토큰으로 연장** → `/me/accounts` 로 **페이지 토큰**을 받음
    - 발행: `instagram_basic`, `instagram_content_publish`, `pages_show_list`, `pages_read_engagement`, `pages_manage_posts`
    - 댓글 수집: `instagram_manage_comments`, `pages_read_user_content`
    - 장기 사용자 토큰에서 받은 **페이지 토큰은 만료일이 없습니다.** (비밀번호 변경, 앱 삭제, 페이지 관리자 권한 해제 때만 끊김)

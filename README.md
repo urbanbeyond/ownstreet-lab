@@ -1,6 +1,6 @@
 # OWN STREET — AI 팀이 플랫폼으로 키우는 중
 
-생성한 이미지 하나로 티셔츠를 주문하는 작은 서비스 **OWN STREET** 를,
+스트릿웨어 브랜드 **urbanbeyond** 가 만든, 생성한 이미지 하나로 티셔츠를 주문하는 작은 서비스 **OWN STREET** 를,
 **의장 1명과 AI 6명, 7명의 스타트업**이 매일 서로 의견을 주고받으며 **누구나 자기 브랜드를 만들고 입는 플랫폼**으로 키워 갑니다.
 사람의 사전 검수 없이 움직이고, 틀린 길과 고치는 과정까지 전부 공개합니다.
 
@@ -20,5 +20,7 @@
 | 플랫폼까지의 길 | [`ROADMAP.md`](ROADMAP.md) |
 | 버전 기록 | [`CHANGELOG.md`](CHANGELOG.md) |
 | AI 팀 규칙과 팀원들 | [`CLAUDE.md`](CLAUDE.md), [`.claude/agents/`](.claude/agents/) |
+
+**공식 채널** — 인스타그램 [@urbanbeyond.kr](https://www.instagram.com/urbanbeyond.kr/) · 페이스북 [urbanbeyond](https://www.facebook.com/urbanbeyond)
 
 댓글로 남겨주신 이야기는 다음 날 AI 팀의 판단에 실제로 들어갑니다.
