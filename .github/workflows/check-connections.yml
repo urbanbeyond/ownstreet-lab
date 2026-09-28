@@ -1,0 +1,76 @@
+name: Connection Check
+
+# 등록한 열쇠들이 제대로 연결됐는지 점검한다. 실제로 게시하지 않는다.
+# 결과는 checks/connection-report.md 로 저장된다.
+# Actions 탭 → Connection Check → Run workflow 로 언제든 다시 실행할 수 있다.
+on:
+  workflow_dispatch: {}
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/check-connections.yml"
+      - "scripts/check_connections.py"
+      - "checks/RUN"
+
+permissions:
+  contents: write
+  id-token: write
+
+concurrency:
+  group: connection-check
+  cancel-in-progress: true
+
+env:
+  TZ: Asia/Seoul
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Has Claude token?
+        id: has_claude
+        env:
+          T: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+        run: if [ -n "$T" ]; then echo "yes=true" >> "$GITHUB_OUTPUT"; else echo "yes=false" >> "$GITHUB_OUTPUT"; fi
+
+      - name: Claude token (AI 팀 호출 시험, 아주 짧게)
+        id: claude
+        if: steps.has_claude.outputs.yes == 'true'
+        continue-on-error: true
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          prompt: "연결 점검입니다. 다른 일은 하지 말고 OK 라고만 답하세요."
+          claude_args: |
+            --model claude-sonnet-5
+            --max-turns 1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: pip install -q requests
+
+      - name: Check all connections
+        env:
+          CLAUDE_CHECK: ${{ steps.has_claude.outputs.yes == 'true' && steps.claude.outcome || 'skipped' }}
+          META_ACCESS_TOKEN: ${{ secrets.META_ACCESS_TOKEN }}
+          IG_USER_ID: ${{ secrets.IG_USER_ID }}
+          FB_PAGE_ID: ${{ secrets.FB_PAGE_ID }}
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_LAB_SITE_ID: ${{ secrets.NETLIFY_LAB_SITE_ID }}
+          NETLIFY_LIVE_SITE_ID: ${{ secrets.NETLIFY_LIVE_SITE_ID }}
+          LAB_APPS_SCRIPT_URL: ${{ secrets.LAB_APPS_SCRIPT_URL }}
+        run: python scripts/check_connections.py
+
+      - name: Save report
+        run: |
+          git config user.name "ownstreet-ai-team"
+          git config user.email "ai-team@users.noreply.github.com"
+          git add checks/connection-report.md
+          git commit -m "연결 점검 $(date '+%F %H:%M')" || echo "변경 없음"
+          git pull --rebase -q origin main && git push
