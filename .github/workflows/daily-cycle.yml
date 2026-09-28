@@ -110,6 +110,33 @@ jobs:
         if: steps.pause.outputs.paused == 'false'
         run: python scripts/prepare_hero.py
 
+      - name: Deploy to LAB site
+        if: steps.pause.outputs.paused == 'false'
+        id: deploy
+        continue-on-error: true
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_LAB_SITE_ID: ${{ secrets.NETLIFY_LAB_SITE_ID }}
+        run: |
+          if [ "${{ steps.lab.outcome }}" != "success" ]; then echo "result=no-build" >> "$GITHUB_OUTPUT"; echo "LAB 빌드 없음 — 배포 안 함"; exit 0; fi
+          if [ -z "$NETLIFY_AUTH_TOKEN" ] || [ -z "$NETLIFY_LAB_SITE_ID" ]; then echo "result=skipped" >> "$GITHUB_OUTPUT"; echo "Netlify 설정 없음 — LAB 배포 건너뜀"; exit 0; fi
+          if npx -y netlify-cli@latest deploy --dir=build/lab --prod \
+               --site="$NETLIFY_LAB_SITE_ID" --auth="$NETLIFY_AUTH_TOKEN" \
+               --message="LAB ${{ steps.today.outputs.date }}"; then
+            echo "result=deployed" >> "$GITHUB_OUTPUT"
+          else
+            echo "result=failed" >> "$GITHUB_OUTPUT"
+          fi
+
+      # 디플로이 픽션 — 오늘 회차 끝에 실제 배포 결과를 도장으로 찍는다
+      - name: Stamp today's episode with the real deploy result
+        if: steps.pause.outputs.paused == 'false'
+        continue-on-error: true
+        env:
+          DEPLOY_RESULT: ${{ steps.deploy.outputs.result }}
+          MODE: ${{ steps.today.outputs.mode }}
+        run: python scripts/stamp_episode.py
+
       - name: Commit today's work
         if: steps.pause.outputs.paused == 'false'
         run: |
@@ -118,15 +145,3 @@ jobs:
           git add -A
           git commit -m "Day ${{ steps.today.outputs.date }} (${{ steps.today.outputs.mode }})" || echo "변경 없음"
           git push
-
-      - name: Deploy to LAB site
-        if: steps.pause.outputs.paused == 'false' && steps.lab.outcome == 'success'
-        continue-on-error: true
-        env:
-          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_LAB_SITE_ID: ${{ secrets.NETLIFY_LAB_SITE_ID }}
-        run: |
-          if [ -z "$NETLIFY_AUTH_TOKEN" ] || [ -z "$NETLIFY_LAB_SITE_ID" ]; then echo "Netlify 설정 없음 — LAB 배포 건너뜀"; exit 0; fi
-          npx -y netlify-cli@latest deploy --dir=build/lab --prod \
-            --site="$NETLIFY_LAB_SITE_ID" --auth="$NETLIFY_AUTH_TOKEN" \
-            --message="LAB ${{ steps.today.outputs.date }}"
