@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>OWN STREET — YOUR IMAGE. YOUR STREET.</title>
+  <meta name="description" content="한국 커스텀 티셔츠 서비스. 생성한 이미지(채팅)의 URL을 보내주세요. 나머지는 우리가 준비합니다.">
+  <meta name="theme-color" content="#F6F3ED">
+  <meta property="og:title" content="OWN STREET — YOUR IMAGE. YOUR STREET.">
+  <meta property="og:description" content="한국 커스텀 티셔츠 서비스. 생성한 이미지(채팅)의 URL을 보내주세요. 나머지는 우리가 준비합니다.">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%2313161B'/%3E%3Crect x='20' y='20' width='24' height='24' fill='%23F85003'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@600;800;900&display=swap">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="page">
+
+  <!-- 1) HERO / LOGIN -->
+  <header class="hero" id="top">
+    <div class="topbar">
+      <span class="font-display topbar-brand">OWN STREET</span>
+
+      <span class="font-display topbar-tag" id="topTag">KR / CUSTOM TEE</span>
+
+      <div class="user-chip" id="userChip" hidden>
+        <span class="chip-avatar"><img id="avatarImg" alt="" referrerpolicy="no-referrer" hidden><span id="avatarInitial" class="font-display"></span></span>
+        <span class="chip-name" id="userName"></span>
+        <button type="button" class="font-display chip-logout" id="logoutBtn">LOGOUT</button>
+      </div>
+    </div>
+
+    <div class="hero-body">
+      <p class="font-display hero-slogan">YOUR IMAGE. YOUR STREET.</p>
+      <h1 class="font-display hero-title">OWN<br>STREET</h1>
+      <p class="hero-lead">생성한 이미지(채팅)의 URL을 보내주세요<br>나머지는 우리가 준비합니다.</p>
+
+      <div class="hero-action" id="authPanel" aria-live="polite">
+        <!-- 확인 중 -->
+        <div class="auth-state" data-state="checking">
+          <p class="muted small">로그인 상태를 확인하고 있습니다…</p>
+        </div>
+
+        <!-- 로그아웃 상태 -->
+        <div class="auth-state" data-state="out" hidden>
+          <button type="button" class="btn btn-paper" id="loginBtn">
+            <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.17-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.91c1.7-1.57 2.69-3.88 2.69-6.62z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.81 5.96-2.18l-2.91-2.26c-.81.54-1.84.86-3.05.86-2.34 0-4.32-1.58-5.03-3.71H.96v2.33A9 9 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.97 10.71A5.4 5.4 0 0 1 3.68 9c0-.59.1-1.17.29-1.71V4.96H.96A9 9 0 0 0 0 9c0 1.45.35 2.82.96 4.04l3.01-2.33z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58C13.46.93 11.43 0 9 0A9 9 0 0 0 .96 4.96l3.01 2.33C4.68 5.16 6.66 3.58 9 3.58z"/></svg>
+            <span class="font-display btn-label">Google로 시작하기</span>
+          </button>
+        </div>
+
+        <!-- 로그인 상태 -->
+        <div class="auth-state" data-state="in" hidden>
+          <a class="badge-accent" href="#request" id="readyBadge">
+            <span class="font-display">접수 가능</span>
+          </a>
+          <p class="login-as"><span id="userEmail"></span> 계정으로 접수됩니다.</p>
+        </div>
+
+        <!-- 카카오톡 등 앱 안의 브라우저 -->
+        <div class="auth-state" data-state="inapp" hidden>
+          <div class="notice-box">
+            <p class="strong">카카오톡·인스타그램 같은 앱 안에서는 Google 로그인이 막혀 있습니다.</p>
+            <p class="muted small" id="inappHint">기본 브라우저(Chrome, Safari)에서 열어주세요.</p>
+            <div class="btn-row">
+              <button type="button" class="btn btn-ink" id="openExternalBtn"><span class="font-display btn-label">브라우저로 열기</span></button>
+              <button type="button" class="btn btn-paper" id="copyLinkBtn"><span class="font-display btn-label">주소 복사</span></button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 설정 전 -->
+        <div class="auth-state" data-state="unavailable" hidden>
+          <p class="strong" id="unavailableMsg">지금은 로그인을 준비하고 있습니다. 잠시 후 다시 방문해주세요.</p>
+        </div>
+
+        <p class="auth-msg" id="authMsg" role="status" hidden></p>
+      </div>
+    </div>
+  </header>
+
+  <!-- 2) CUSTOM REQUEST -->
+  <section class="section" id="request" aria-labelledby="requestTitle">
+    <div class="section-label">
+      <span class="font-display section-num">01</span>
+      <h2 class="font-display section-title" id="requestTitle">CUSTOM REQUEST</h2>
+    </div>
+    <p class="section-desc">아래 세 항목만 입력해주세요. 접수 후 안내드립니다.</p>
+
+    <form id="requestForm" class="form" novalidate>
+      <p class="gate" id="loginGate">REQUEST 전에 위의 <strong>Google로 시작하기</strong>로 로그인해주세요.</p>
+
+      <label class="field" for="name">
+        <span class="font-display field-label">이름</span>
+        <input id="name" name="name" type="text" class="own-input" autocomplete="name" maxlength="40" placeholder="홍길동" aria-describedby="nameErr">
+        <span class="err" id="nameErr" hidden></span>
+      </label>
+
+      <label class="field" for="phone">
+        <span class="font-display field-label">전화번호</span>
+        <input id="phone" name="phone" type="tel" class="own-input" inputmode="numeric" autocomplete="tel" maxlength="13" placeholder="010-0000-0000" aria-describedby="phoneErr">
+        <span class="err" id="phoneErr" hidden></span>
+      </label>
+
+      <label class="field" for="url">
+        <span class="font-display field-label">URL</span>
+        <input id="url" name="url" type="text" class="own-input" inputmode="url" autocomplete="url" autocapitalize="off" autocorrect="off" spellcheck="false" maxlength="2000" placeholder="https://..." aria-describedby="urlErr">
+        <span class="err" id="urlErr" hidden></span>
+      </label>
+
+      <div class="consent">
+        <label class="check" for="consent">
+          <input type="checkbox" id="consent" name="consent" aria-describedby="consentInfo consentErr">
+          <span class="box" aria-hidden="true"></span>
+          <span>개인정보 수집 및 이용에 동의합니다.</span>
+        </label>
+        <p class="consent-info" id="consentInfo">
+          수집 항목: 이름, 전화번호, 이미지 URL, Google 이메일<br>
+          이용 목적: 커스텀 제작 요청 확인, 고객 연락, 제작 관련 안내<br>
+          <button type="button" class="link" data-open="privacyDialog">자세히 보기</button>
+        </p>
+        <span class="err" id="consentErr" hidden></span>
+      </div>
+
+      <button type="submit" class="btn-request font-display" id="submitBtn">REQUEST</button>
+    </form>
+  </section>
+
+  <!-- 3) PRODUCT / CUSTOM INFO -->
+  <section class="section info" aria-labelledby="infoTitle">
+    <div class="section-label">
+      <span class="font-display section-num">02</span>
+      <h2 class="font-display section-title" id="infoTitle">PRODUCT / CUSTOM INFO</h2>
+    </div>
+
+    <div class="accordion">
+      <details>
+        <summary><span class="font-display acc-title">SIZE</span><span class="font-display acc-sign" aria-hidden="true">+</span></summary>
+        <div class="acc-body">
+          <div class="size-chips" id="sizeChips"></div>
+          <div class="table-scroll"><table class="size-table" id="sizeTable"></table></div>
+          <p class="acc-note" id="sizeNote"></p>
+        </div>
+      </details>
+
+      <details>
+        <summary><span class="font-display acc-title">QUALITY</span><span class="font-display acc-sign" aria-hidden="true">+</span></summary>
+        <div class="acc-body"><ul class="bullets" id="qualityList"></ul></div>
+      </details>
+
+      <details>
+        <summary><span class="font-display acc-title">CARE</span><span class="font-display acc-sign" aria-hidden="true">+</span></summary>
+        <div class="acc-body"><ul class="bullets" id="careList"></ul></div>
+      </details>
+
+      <details>
+        <summary><span class="font-display acc-title">CUSTOM GUIDE</span><span class="font-display acc-sign" aria-hidden="true">+</span></summary>
+        <div class="acc-body"><ul class="bullets" id="guideList"></ul></div>
+      </details>
+
+      <details>
+        <summary><span class="font-display acc-title">COPYRIGHT / NOTICE</span><span class="font-display acc-sign" aria-hidden="true">+</span></summary>
+        <div class="acc-body"><ul class="bullets" id="noticeList"></ul></div>
+      </details>
+    </div>
+  </section>
+
+  <!-- 4) FOOTER -->
+  <footer class="footer">
+    <nav class="font-display footer-links" aria-label="안내">
+      <button type="button" data-open="privacyDialog">Privacy</button>
+      <button type="button" data-open="termsDialog">Terms</button>
+      <button type="button" data-open="contactDialog">Contact</button>
+    </nav>
+    <div class="font-display footer-copy">© 2026 OWN STREET</div>
+  </footer>
+</div>
+
+<!-- 완료 -->
+<dialog id="completeDialog" class="modal modal-accent" aria-labelledby="completeTitle">
+  <div class="modal-kicker"><span class="dot"></span><span class="font-display">REQUEST COMPLETE</span></div>
+  <h2 class="font-display modal-title" id="completeTitle">접수가 완료되었습니다.</h2>
+  <p class="modal-text">확인 후 연락드리겠습니다.</p>
+  <p class="modal-sub">접수 번호</p>
+  <p class="font-display receipt" id="receiptNo"></p>
+  <div class="modal-actions">
+    <button type="button" class="btn-modal btn-modal-line font-display" id="copyBtn">COPY</button>
+    <button type="button" class="btn-modal btn-modal-ink font-display" id="closeCompleteBtn">CLOSE</button>
+  </div>
+  <p class="copy-msg" id="copyMsg" role="status"></p>
+</dialog>
+
+<!-- 실패 -->
+<dialog id="failDialog" class="modal" aria-labelledby="failTitle">
+  <div class="modal-kicker modal-kicker-error"><span class="dot"></span><span class="font-display">REQUEST FAILED</span></div>
+  <h2 class="font-display modal-title" id="failTitle">접수에 실패했습니다.</h2>
+  <p class="modal-text" id="failText">잠시 후 다시 시도해주세요.</p>
+  <div class="modal-actions">
+    <button type="button" class="btn-modal btn-modal-ink font-display" id="retryBtn">다시 시도</button>
+    <button type="button" class="btn-modal btn-modal-line font-display" data-close>닫기</button>
+  </div>
+</dialog>
+
+<!-- 개인정보 -->
+<dialog id="privacyDialog" class="modal modal-doc" aria-labelledby="privacyTitle">
+  <h2 class="font-display modal-title" id="privacyTitle">PRIVACY</h2>
+  <p class="modal-sub">개인정보 수집 및 이용 안내</p>
+  <ul class="bullets">
+    <li>수집 항목: 이름, 전화번호, 이미지 URL, Google 계정 이메일</li>
+    <li>이용 목적: 커스텀 제작 요청 확인, 고객 연락, 제작 관련 안내</li>
+    <li>보유 기간: <span id="retentionText"></span></li>
+  </ul>
+  <p class="modal-text small">개인정보 수집 및 이용에 동의하지 않을 수 있습니다. 다만 동의하지 않으면 제작 요청을 보낼 수 없습니다.</p>
+  <div class="modal-actions"><button type="button" class="btn-modal btn-modal-ink font-display" data-close>닫기</button></div>
+</dialog>
+
+<!-- 이용 안내 -->
+<dialog id="termsDialog" class="modal modal-doc" aria-labelledby="termsTitle">
+  <h2 class="font-display modal-title" id="termsTitle">TERMS</h2>
+  <ul class="bullets" id="termsList"></ul>
+  <div class="modal-actions"><button type="button" class="btn-modal btn-modal-ink font-display" data-close>닫기</button></div>
+</dialog>
+
+<!-- 문의 -->
+<dialog id="contactDialog" class="modal modal-doc" aria-labelledby="contactTitle">
+  <h2 class="font-display modal-title" id="contactTitle">CONTACT</h2>
+  <p class="modal-text small" id="contactText"></p>
+  <div class="modal-actions"><button type="button" class="btn-modal btn-modal-ink font-display" data-close>닫기</button></div>
+</dialog>
+
+<script src="config.js"></script>
+<script type="module" src="app.js"></script>
+</body>
+</html>
