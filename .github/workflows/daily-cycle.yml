@@ -1,7 +1,7 @@
 name: Daily Lab Cycle
 
 # 매일 새벽 4시(한국 시간): AI 팀이 하루치 작업을 하고, LAB 사이트에 배포하고, 포스트를 준비한다.
-# 발행은 publish.yml 이 아침 7시에 한다. LIVE 반영은 promote-live.yml (운영자 버튼).
+# 발행은 publish.yml 이 아침 7시에 한다. LIVE 반영은 promote-live.yml (의장 버튼).
 on:
   schedule:
     - cron: "0 19 * * *"   # UTC 19:00 = KST 04:00

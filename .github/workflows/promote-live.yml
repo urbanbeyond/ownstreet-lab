@@ -1,6 +1,6 @@
 name: Promote LAB to LIVE
 
-# 운영자만 누르는 버튼. 지금 app/ 의 상태를 실제 고객이 쓰는 LIVE 사이트에 반영한다.
+# 의장만 누르는 버튼. 지금 app/ 의 상태를 실제 고객이 쓰는 LIVE 사이트에 반영한다.
 # Actions 탭 → Promote LAB to LIVE → Run workflow → 확인란에 LIVE 입력
 on:
   workflow_dispatch:
@@ -72,8 +72,8 @@ jobs:
           marker = "## 기록\n\n"
           p.write_text(t.replace(marker, marker + sys.argv[1] + "\n", 1), encoding="utf-8")
           PY
-          git config user.name "ownstreet-operator"
-          git config user.email "operator@users.noreply.github.com"
+          git config user.name "ownstreet-chair"
+          git config user.email "chair@users.noreply.github.com"
           git add CHANGELOG.md
           git commit -m "LIVE $(date +%F)"
           git push
