@@ -1,6 +1,6 @@
 """
 오늘 쓰인 웹소설 회차에 실제 배포 결과를 '배포 도장'으로 찍는다.
-디플로이 픽션 — "코드가 흐르면 현실이 된다." 소설이 거짓말하지 않게 하는 장치.
+디플로이 픽션 — "코드가 실행되면, 소설은 현실이 된다." 소설이 거짓말하지 않게 하는 장치.
 
 환경변수
   DEPLOY_RESULT : deployed | failed | skipped | no-build
@@ -31,11 +31,11 @@ def stamp_line(result: str, mode: str, version: str) -> str:
     now = datetime.now(KST).strftime("%Y-%m-%d %H:%M")
     ver = f" · {version}" if version else ""
     if mode == "meeting":
-        return f"▶ no deploy · 회의의 날 · {now} — 오늘은 코드 대신 말이 흘렀다."
+        return f"▶ no deploy · 회의의 날 · {now} — 오늘은 코드 대신 말이 오갔다."
     if result == "deployed":
-        return f"▶ deploy · LAB{ver} · {now} — 코드가 흘렀다."
+        return f"▶ deploy · LAB{ver} · {now} — 코드가 실행됐다."
     if result == "failed":
-        return f"▶ deploy failed · LAB{ver} · {now} — 오늘 코드는 흐르지 못했다."
+        return f"▶ deploy failed · LAB{ver} · {now} — 오늘 코드는 실행되지 못했다."
     if result == "no-build":
         return f"▶ deploy blocked · LAB{ver} · {now} — 안전 검사에 걸려 멈췄다."
     return f"▶ deploy pending · LAB{ver} · {now} — 코드는 아직 흐를 길을 기다린다."
