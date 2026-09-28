@@ -52,7 +52,7 @@ window.OWN_STREET_CONFIG = {
   //    kakaopayQr:   완료 화면에 보이는 QR 그림 파일 (site 폴더 안의 kakaopay-qr.svg)
   payment: {
     productName: 'STANDARD',
-    description: '뒷면 프린트 기준',
+    description: '',
     price: 35000,
     kakaopayLink: 'https://qr.kakaopay.com/Ej9FTP16i445c08554',
     kakaopayQr: 'kakaopay-qr.svg'
@@ -62,7 +62,7 @@ window.OWN_STREET_CONFIG = {
   quality: [
     '소재: 면 100%',
     '원단: 내구성 높은 신축성 니트 원단, 촉감 부드러움',
-    '프린팅 방식: DTF(전사지) only'
+    '프린팅 방식: DTF(전사지) only (뒷면 프린트 기준)'
   ],
   care: [
     '30도 이하 미지근한 물에 뒤집어서 단독 세탁',
@@ -78,6 +78,7 @@ window.OWN_STREET_CONFIG = {
   notice: [
     '사용 권한: 제출한 이미지의 사용 권한은 신청자에게 있으며, 타인 저작권 침해 시 책임은 신청자에게 있습니다.',
     '교환/환불: 주문 제작 상품 특성상 단순 변심 불가, 불량 시 재제작 또는 환불',
+    '제작 불가 시: 이미지 확인 후 제작이 어려운 경우 연락드리며, 결제 금액은 전액 환불해드립니다.',
     '제작 시 오차: 인쇄 위치·색상 ±5% 내외, 원단 봉제 미세 오차 발생 가능'
   ]
 };

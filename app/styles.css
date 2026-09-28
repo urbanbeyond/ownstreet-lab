@@ -222,16 +222,11 @@ img, svg { display: block; }
 @media (prefers-reduced-motion: reduce) { .btn, .btn-request, .acc-sign { transition: none !important; } }
 
 /* ---------- Price ---------- */
-.price-box {
-  border: 2px solid var(--foreground);
-  background: var(--card);
-  padding: 14px 16px;
-  box-shadow: 4px 4px 0 0 var(--foreground);
-}
-.price-row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
-.price-name { font-size: 18px; line-height: 28px; text-transform: uppercase; letter-spacing: 0.05em; }
-.price-amount { font-size: 26px; line-height: 32px; letter-spacing: 0.02em; color: var(--accent); white-space: nowrap; }
-.price-desc { margin-top: 4px; font-size: 13px; line-height: 1.6; color: var(--muted-foreground); }
+.price-box { padding: 2px 0; }
+.price-row { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.price-name { font-size: 12px; line-height: 16px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted-foreground); }
+.price-amount { font-family: var(--font-sans); font-size: 16px; line-height: 24px; font-weight: 700; letter-spacing: 0; color: var(--foreground); white-space: nowrap; }
+.price-desc { margin-top: 2px; font-size: 13px; line-height: 1.6; color: var(--muted-foreground); }
 
 /* ---------- Accordion ---------- */
 .accordion {
