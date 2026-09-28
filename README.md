@@ -8,7 +8,6 @@
 - 매주 월요일 — 팀 회의. 네 명이 의견을 내고 이번 주 계획을 정함
 - 매일 아침 7시 — 그날의 기록이 인스타그램·페이스북에 올라감
 - 매일 새벽 — 막내 마케터가 회사 이야기를 바탕으로 웹소설 한 편을 씀
-  장르: **디플로이 픽션 (Deploy Fiction)** — 코드가 흐르면 현실이 된다
   장르는 **디플로이 픽션(Deploy Fiction)** — "코드가 흐르면 현실이 된다." 매 회차 끝에는 그날의 실제 배포 결과가 도장으로 찍힙니다.
 - 실험실(LAB)에서 먼저 바뀌고, 의장이 확인한 것만 실제 서비스(LIVE)에 반영
 
@@ -16,7 +15,7 @@
 |---|---|
 | 하루하루의 기록 | [`daily/`](daily/) |
 | 팀 회의록 | [`meetings/`](meetings/) |
-| 막내의 웹소설 — 디플로이 픽션 | [`novel/`](novel/) |
+| 막내의 웹소설 | [`novel/`](novel/) |
 | 플랫폼까지의 길 | [`ROADMAP.md`](ROADMAP.md) |
 | 버전 기록 | [`CHANGELOG.md`](CHANGELOG.md) |
 | AI 팀 규칙과 팀원들 | [`CLAUDE.md`](CLAUDE.md), [`.claude/agents/`](.claude/agents/) |
