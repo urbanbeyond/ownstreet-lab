@@ -35,14 +35,19 @@
 
 ## 3. LAB 백엔드 만들기 (15분)
 
-LAB 에서 들어온 테스트 요청이 실제 주문 시트에 섞이지 않게, 똑같은 백엔드를 하나 더 만듭니다.
+LAB 에서 들어온 테스트 요청이 실제 주문 시트에 섞이지 않게, 빈 시트로 백엔드를 하나 더 만듭니다.
+실제 주문 시트를 복사하지 않습니다 (고객 개인정보가 따라 복사되는 것을 막기 위해).
 urbanbeyond.korea 크롬 프로필에서 진행하세요.
 
-1. 구글 드라이브에서 `ownstreetdb` 스프레드시트 **사본 만들기** → 이름 `ownstreetdb-LAB` → REQUESTS 시트의 제목줄만 남기고 나머지 행 삭제
-2. OWN STREET Apps Script 프로젝트를 열고 **개요 → 사본 만들기** → 이름 `ownstreet-LAB`
-3. 사본의 Code.gs 에서 스프레드시트 ID 를 **LAB 시트의 ID** 로 바꿈
-4. **배포 → 새 배포 → 웹 앱** (원래와 같은 설정) → 나온 `.../exec` 주소 복사
-5. GitHub Secret 추가: `LAB_APPS_SCRIPT_URL` = 그 주소
+1. https://sheets.new 로 **빈 스프레드시트** 만들기 → 이름 `ownstreetdb-LAB`
+2. 그 시트에서 **확장 프로그램 → Apps Script** → 프로젝트 이름 `ownstreet-LAB`
+3. Code.gs 안의 내용을 모두 지우고, 아래 주소의 코드를 전부 복사해 붙여넣기 → 저장
+   https://raw.githubusercontent.com/urbanbeyond/ownstreet-lab/main/backend/Code.gs
+   (`SPREADSHEET_ID` 는 비워 둔 그대로 둡니다. 이 시트에 붙어 있는 스크립트라 자동으로 이 시트에 저장됩니다.)
+4. 함수 선택 칸에서 **setup** → **▶ 실행** → 권한 허용 → 실행 로그에 ✅ 두 줄 확인
+5. **배포 → 새 배포 → 유형: 웹 앱** / 실행: **나** / 액세스: **모든 사용자** → 배포 → 나온 `.../exec` 주소 복사
+6. 주소를 브라우저에서 열어 "접수 서버가 작동 중입니다." 가 보이면 성공
+7. GitHub Secret 추가: `LAB_APPS_SCRIPT_URL` = 그 주소
 
 ## 4. Netlify (15분)
 
