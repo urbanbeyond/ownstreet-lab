@@ -31,8 +31,7 @@ ROLE_LABEL = {
     "pm": "PM",
     "brand-feature-developer": "BRAND FEATURE",
     "designer": "DESIGNER",
-    "frontend-developer": "FRONTEND",
-    "backend-developer": "BACKEND",
+    "developer": "DEVELOPER",
     "marketer": "MARKETER",
     "meeting": "TEAM MEETING",
 }

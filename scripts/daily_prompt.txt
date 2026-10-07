@@ -9,7 +9,7 @@ MODE = work (평일)
 1. [PM] pm 에이전트 — 평일 모드로 오늘의 역할과 목표를 정한다.
    결과: daily/TODAY/pm_decision.md
 
-2. [작업] pm_decision.md 의 역할 에이전트(brand-feature-developer / designer / frontend-developer / backend-developer)
+2. [작업] pm_decision.md 의 역할 에이전트(brand-feature-developer / designer / developer)
    — 평일 작업 모드로 오늘 목표를 수행한다.
    결과: app/ 또는 backend/ 변경, daily/TODAY/work_summary.md, CHANGELOG.md 한 줄
 
@@ -22,7 +22,7 @@ MODE = meeting (월요일 또는 첫날)
 ────────────────────────────────
 1. [의견] 아래 순서로 한 명씩, 회의 모드로 meetings/TODAY/<역할>.md 를 쓰게 한다.
    뒤에 쓰는 사람은 앞 사람 의견을 읽고 동의·반대를 밝힌다.
-   순서: designer → frontend-developer → backend-developer → brand-feature-developer
+   순서: designer → developer → brand-feature-developer
 2. [결정] pm 에이전트 — 회의 모드로 daily/TODAY/pm_decision.md(결정), ROADMAP.md 이번 주 목표 작성
 3. [마케터] marketer 에이전트 — 회의 날 순서대로
    결과: meetings/TODAY/minutes.md (회의록), daily/TODAY/team_note.md, daily/TODAY/post.json (role: "meeting"),
