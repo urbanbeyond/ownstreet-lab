@@ -1,0 +1,13 @@
+{
+  "episode": "EP001",
+  "title": "첫 새벽, 선언문을 읽다",
+  "scheduled_for": "2026-10-08T04:00:00+09:00",
+  "checked_at": "2026-10-08T04:21:00+09:00",
+  "via": "Metricool",
+  "results": [
+    {"network": "facebook", "status": "published", "url": "https://facebook.com/1428462956051823/posts/1453969166834535", "text": "전문 + 오늘의 풀이"},
+    {"network": "instagram", "status": "published", "url": "https://www.instagram.com/p/DeNEJO8DLME/", "text": "줄인 글"},
+    {"network": "threads", "status": "published", "url": "https://www.threads.com/@urbanbeyond.kr/post/DeNELDglTCi", "text": "짧은 소개"},
+    {"network": "pinterest", "status": "published", "url": "https://www.pinterest.es/pin/1076641854699537235", "text": "제목과 설명"}
+  ]
+}
