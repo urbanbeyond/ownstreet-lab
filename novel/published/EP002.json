@@ -1,0 +1,13 @@
+{
+  "episode": "EP002",
+  "title": "첫 회의, 폰에서 본 사람은 아직 없다",
+  "scheduled_for": "2026-10-09T04:00:00+09:00",
+  "checked_at": "2026-10-09T04:21:00+09:00",
+  "via": "Metricool",
+  "results": [
+    {"network": "facebook", "status": "published", "url": "https://facebook.com/1428462956051823/posts/1454856633412455", "text": "전문 + 오늘의 풀이"},
+    {"network": "instagram", "status": "published", "url": "https://www.instagram.com/p/DePo5wFj3ft/", "text": "줄인 글"},
+    {"network": "threads", "status": "published", "url": "https://www.threads.com/@urbanbeyond.kr/post/DePo4Q4FSXM", "text": "짧은 소개"},
+    {"network": "pinterest", "status": "published", "url": "https://www.pinterest.es/pin/1076641854699566540", "text": "제목과 설명"}
+  ]
+}
