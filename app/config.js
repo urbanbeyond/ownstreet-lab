@@ -29,7 +29,7 @@ window.OWN_STREET_CONFIG = {
   contactUrl: 'https://pf.kakao.com/_nxaEJG/chat',
 
   // ④ 개인정보 보유 기간 (예: '요청 처리 완료 후 1년' 처럼 운영 방침에 맞게 직접 작성)
-  privacyRetention: '1년',
+  privacyRetention: '접수일로부터 1년',
 
   // ⑤ 사이즈표 (단위 cm) — 피그먼트 반팔 기준
   //    값을 바꿀 때는 '' 안의 숫자만 고치세요. 줄(사이즈)을 늘리거나 줄여도 됩니다.
