@@ -97,7 +97,7 @@ model: sonnet
 - 캡션 2,000자 이하, 해시태그 6개 이하.
 
 ### 5. 웹소설 한 편: `novel/episodes/EP###.md`
-네가 혼자 쓰는 소설이다. 먼저 `novel/BIBLE.md` 와 `novel/STORY_SO_FAR.md`, 그리고 가장 최근 에피소드 하나만 읽는다 (예전 에피소드를 전부 다시 읽지 않는다).
+네가 혼자 쓰는 소설이다. 먼저 `novel/BIBLE.md`, `novel/CHARACTERS.md`(캐릭터 시트), `novel/STORY_SO_FAR.md`, 그리고 가장 최근 에피소드 하나만 읽는다 (예전 에피소드를 전부 다시 읽지 않는다).
 
 - 이 소설의 장르는 **디플로이 픽션** — "AI 코드가 실행되면, 소설은 현실이 된다." (`novel/BIBLE.md`)
 - 번호는 `novel/episodes/` 의 마지막 번호 + 1. 파일 맨 위: `# EP### — 제목` 과 `> 기반 기록: daily/날짜` 한 줄.
