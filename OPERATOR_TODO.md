@@ -14,7 +14,7 @@ AI 팀이 스스로 할 수 없는 일(백엔드 배포, 결제·설정 변경, 
 
   **A. LAB 먼저 (약 15분, urbanbeyond.korea 크롬 프로필)**
   1. 새 코드 복사: 브라우저에서 `https://raw.githubusercontent.com/urbanbeyond/ownstreet-lab/main/backend/Code.gs` 를 엽니다(`SETUP_GUIDE.md` 3단계와 같은 주소). 글자 중에 `SERVER_VERSION = 2` 가 보이면 새 코드입니다. 안 보이면 오늘 작업이 아직 저장소에 올라오지 않은 것이니 조금 뒤에 다시 여세요. 전체 선택(Ctrl+A) → 복사.
-  2. LAB 스프레드시트(`ownstreetdb-LAB`)를 열고 상단 **확장 프로그램 → Apps Script** 로 들어갑니다(프로젝트 이름 `ownstreet-LAB`).
+  2. LAB 스프레드시트(`ownstreet-lab`)를 열고 상단 **확장 프로그램 → Apps Script** 로 들어갑니다(프로젝트 이름 `ownstreet-LAB`).
   3. (안전용) 지금 들어 있는 코드를 전부 복사해서 메모장에 잠깐 붙여 두세요. 문제가 생기면 되돌릴 수 있습니다. 그다음 `Code.gs` 안의 내용을 모두 지우고 1번에서 복사한 코드를 붙여넣고 **저장**(디스크 아이콘 또는 Ctrl+S).
   4. 시트 ID 를 스크립트 속성에 한 번 넣습니다: 왼쪽 **⚙ 프로젝트 설정** → 맨 아래 **스크립트 속성 → 스크립트 속성 추가** → 속성 `SPREADSHEET_ID` / 값은 LAB 스프레드시트 주소 `https://docs.google.com/spreadsheets/d/(여기 긴 글자)/edit` 의 **(여기 긴 글자)** 부분 → **스크립트 속성 저장**. 이 긴 글자는 GitHub 저장소·이 파일·AI 팀과의 대화 어디에도 붙여넣지 마세요(저장소가 공개입니다). 이미 있는 `OS_LAST_SEQ` 속성은 그대로 두세요.
   5. 위쪽 함수 선택 칸에서 **setup** 선택 → **▶ 실행**. 권한 승인 창이 뜨면 허용합니다. 아래 실행 로그에 `✅` 로 시작하는 줄이 3개(스프레드시트 연결 / 머리글 13칸 / Firebase API 키) 나오면 정상입니다. `❌` 가 나오면 그 줄을 그대로 `DIRECTION.md` 에 적어 주세요.

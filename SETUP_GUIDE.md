@@ -39,7 +39,7 @@ LAB 에서 들어온 테스트 요청이 실제 주문 시트에 섞이지 않�
 실제 주문 시트를 복사하지 않습니다 (고객 개인정보가 따라 복사되는 것을 막기 위해).
 urbanbeyond.korea 크롬 프로필에서 진행하세요.
 
-1. https://sheets.new 로 **빈 스프레드시트** 만들기 → 이름 `ownstreetdb-LAB`
+1. https://sheets.new 로 **빈 스프레드시트** 만들기 → 이름 `ownstreet-lab`
 2. 그 시트에서 **확장 프로그램 → Apps Script** → 프로젝트 이름 `ownstreet-LAB`
 3. Code.gs 안의 내용을 모두 지우고, 아래 주소의 코드를 전부 복사해 붙여넣기 → 저장
    https://raw.githubusercontent.com/urbanbeyond/ownstreet-lab/main/backend/Code.gs
