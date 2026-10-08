@@ -6,7 +6,11 @@
 
 // Google 공식 Firebase 로그인 라이브러리 (v12.19.0, 사이트 폴더 안에 포함)
 const FIREBASE_LIB_URL = './vendor/firebase-12.19.0.js';
-const REQUEST_TIMEOUT_MS = 30000;
+// 한 번 기다리는 한도. 30초 → 60초 (2026-10-09 LAB 시험에서 서버가 37.9초 걸려 화면이 먼저 끊었다.
+// 서버가 잠금을 기다리는 시간만 최대 30초이고 저장 시간이 따로 붙으므로 30초는 처음부터 빠듯했다.)
+const REQUEST_TIMEOUT_MS = 60000;
+const SLOW_NOTICE_MS = 10000;   // 이 시간 안에 답이 없으면 "오래 걸리고 있어요"를 보여 준다
+const RECHECK_DELAY_MS = 2000;  // 답이 없을 때 같은 요청으로 다시 확인하기 전에 잠깐 쉰다
 const RECEIPT_PATTERN = /^OS-\d{4,}$/;
 const URL_PATTERN = /^https?:\/\/[^\s\/?#]+\.[^\s\/?#]+([\/?#]\S*)?$/i;
 
@@ -19,8 +23,20 @@ const state = {
   user: null,      // 로그인한 사용자 (없으면 null)
   ready: false,    // 로그인 기능 사용 가능 여부
   sending: false,
-  pending: null    // 재시도 시 같은 요청으로 인식시키기 위한 정보
+  // 재시도 시 같은 요청으로 인식시키기 위한 정보 { sig, uid, data, clientRef, tries, unconfirmed }
+  // unconfirmed: 서버가 접수했는지 모르는 상태. 이 동안은 같은 clientRef 로만 다시 보낸다.
+  pending: null
 };
+
+// 서버가 이 코드를 돌려줬다면 아무것도 저장되지 않았다 (Code.gs 는 저장 전에 이 검사들을 끝낸다)
+const NOT_SAVED_CODES = ['NO_ENDPOINT', 'TOKEN_ERROR', 'BAD_REQUEST', 'VERSION_MISMATCH', 'NOT_CONFIGURED',
+  'AUTH_INVALID', 'AUTH_UNAVAILABLE', 'INVALID_INPUT', 'CONSENT_REQUIRED', 'BUSY'];
+const SLOW_TEXT = '평소보다 오래 걸리고 있어요. 화면을 닫지 말고 기다려 주세요.';
+const CHECK_TEXT = '접수 상태를 확인하고 있어요. 화면을 닫지 마세요.';
+const CHECK_SLOW_TEXT = '접수 상태를 확인하고 있어요. 평소보다 오래 걸리고 있어요. 화면을 닫지 마세요.';
+const OLD_CHECK_TEXT = '이전에 보낸 요청이 접수됐는지 먼저 확인하고 있어요. 화면을 닫지 마세요.';
+const UNKNOWN_TEXT = "'다시 확인'을 누르면 같은 요청으로 확인하므로 두 번 접수되지 않습니다.\n접수번호를 받기 전에는 접수됐다고 말씀드릴 수 없습니다.\n급하면 카카오톡 채널로 문의해 주세요.";
+let failMode = 'failed'; // 실패 창이 지금 어느 모양인지: 'failed' | 'unknown'
 
 init();
 
@@ -244,6 +260,11 @@ function bindForm() {
 
   $('retryBtn').addEventListener('click', () => {
     $('failDialog').close();
+    // 접수 여부를 모르는 상태의 "다시 확인"은 폼을 다시 읽지 않고, 보냈던 요청 그대로(같은 clientRef) 확인한다
+    if (failMode === 'unknown' && state.pending && state.pending.unconfirmed && state.user) {
+      recheckPending();
+      return;
+    }
     if (typeof form.requestSubmit === 'function') form.requestSubmit();
     else form.dispatchEvent(new Event('submit', { cancelable: true }));
   });
@@ -295,21 +316,111 @@ async function onSubmit(e) {
 
 async function send(data) {
   const sig = JSON.stringify([state.user.uid, data.name, data.phone, data.url]);
-  if (!state.pending || state.pending.sig !== sig) {
-    state.pending = { sig, data, clientRef: newClientRef() };
-  }
   setSending(true);
   try {
-    let result = await postRequest(state.pending, false);
-    if (result.code === 'AUTH_INVALID') {
-      // 로그인 토큰을 새로 받아 한 번 더 시도
-      result = await postRequest(state.pending, true);
+    // 접수 여부를 모르는 이전 요청이 있고 내용이 바뀌었다면, 새로 보내기 전에 이전 요청부터 확인한다
+    // (이전 요청이 이미 저장됐을 수 있는데 새 clientRef 로 또 보내면 두 번 접수된다)
+    if (state.pending && state.pending.sig !== sig) {
+      if (!(await settleOldPending())) return;
+    }
+    if (!state.pending || state.pending.sig !== sig) {
+      state.pending = { sig, uid: state.user.uid, data, clientRef: newClientRef(), tries: 0, unconfirmed: false };
+    }
+    const pending = state.pending;
+    let result = await attemptRequest(pending, SLOW_TEXT);
+    if (isNoAnswer(result)) {
+      // 답이 없다 = 접수됐는지 모른다. 바로 "실패"라고 하지 않고, 같은 clientRef 로 한 번 더 확인한다.
+      pending.unconfirmed = true;
+      showStatus(CHECK_TEXT);
+      await sleep(RECHECK_DELAY_MS);
+      result = await attemptRequest(pending, CHECK_SLOW_TEXT);
     }
     handleResult(result);
   } finally {
     setSending(false);
   }
 }
+
+/** 접수 여부를 모르는 채로 닫힌 요청을, 보냈던 그대로(같은 clientRef) 다시 확인한다 */
+async function recheckPending() {
+  if (state.sending || !state.pending || !state.user || state.pending.uid !== state.user.uid) return;
+  setSending(true);
+  try {
+    showStatus(CHECK_TEXT);
+    handleResult(await attemptRequest(state.pending, CHECK_SLOW_TEXT));
+  } finally {
+    setSending(false);
+  }
+}
+
+/** 이전 요청을 확인한다. 새 요청을 보내도 되면 true */
+async function settleOldPending() {
+  const old = state.pending;
+  // 확인할 수 없거나(다른 계정) 접수 여부를 모르는 상태가 아니면 이전 요청은 버린다
+  if (!old.unconfirmed || old.uid !== state.user.uid) { state.pending = null; return true; }
+  showStatus(OLD_CHECK_TEXT);
+  const r = await attemptRequest(old, OLD_CHECK_TEXT);
+  if (isReceipt(r)) {
+    handleResult(r);
+    $('copyMsg').textContent = '고치기 전에 보냈던 요청이 이미 접수되어 있었습니다. 새로 접수하지 않았습니다.';
+    return false;
+  }
+  if (r && NOT_SAVED_CODES.includes(r.code)) { state.pending = null; return true; }
+  showFailDialog('unknown');
+  return false;
+}
+
+/**
+ * 서버에 한 번 보낸다 (로그인 토큰이 만료됐으면 새로 받아 한 번 더). 걸린 시간과 결과 코드를 콘솔에 남긴다.
+ * 콘솔에는 이름·전화번호·이메일·토큰·입력 주소를 남기지 않는다. 시도 횟수, 걸린 시간, 결과 코드만.
+ */
+async function attemptRequest(pending, slowText) {
+  pending.tries += 1;
+  const t0 = Date.now();
+  const slow = setTimeout(() => showStatus(slowText), SLOW_NOTICE_MS);
+  let r;
+  try {
+    r = await postRequest(pending, false);
+    if (r && r.code === 'AUTH_INVALID') {
+      // 로그인 토큰을 새로 받아 한 번 더 시도 (같은 clientRef)
+      r = await postRequest(pending, true);
+    }
+  } finally {
+    clearTimeout(slow);
+  }
+  if (!r || typeof r !== 'object') r = { ok: false, code: 'BAD_RESPONSE' };
+  console.info('[OWN STREET] 접수 요청 ' + pending.tries + '번째 · ' + (Date.now() - t0) + 'ms · '
+    + (isReceipt(r) ? 'ok ' + r.request_id + (r.duplicate ? ' (이미 저장된 요청)' : '') : (r.code || 'UNKNOWN')));
+  return r;
+}
+
+/** 서버가 접수번호를 돌려준 경우만 true. 이 조건을 느슨하게 만들지 않는다. */
+function isReceipt(r) {
+  return !!r && r.ok === true && RECEIPT_PATTERN.test(String(r.request_id || ''));
+}
+
+/** 서버의 분명한 답이 아니라 "답이 없음"인 경우: 시간 초과, 연결 끊김, 해석할 수 없는 응답, HTTP 오류 */
+function isNoAnswer(r) {
+  const c = r && r.code;
+  return c === 'TIMEOUT' || c === 'NETWORK' || c === 'BAD_RESPONSE' || (typeof c === 'string' && c.indexOf('HTTP_') === 0);
+}
+
+function sleep(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
+
+function statusEl() {
+  let el = $('sendStatus');
+  if (!el) {
+    el = document.createElement('p');
+    el.id = 'sendStatus';
+    el.className = 'gate';
+    el.setAttribute('role', 'status');
+    el.hidden = true;
+    $('submitBtn').insertAdjacentElement('afterend', el);
+  }
+  return el;
+}
+function showStatus(text) { const el = statusEl(); el.textContent = text; el.hidden = false; }
+function hideStatus() { statusEl().hidden = true; }
 
 async function postRequest(pending, forceRefresh) {
   if (!CFG.requestEndpoint) return { ok: false, code: 'NO_ENDPOINT' };
@@ -353,7 +464,7 @@ async function postRequest(pending, forceRefresh) {
 
 function handleResult(r) {
   r = r || {};
-  if (r.ok === true && RECEIPT_PATTERN.test(String(r.request_id || ''))) {
+  if (isReceipt(r)) {
     state.pending = null;
     $('requestForm').reset();
     clearAllErrors();
@@ -361,7 +472,16 @@ function handleResult(r) {
     return;
   }
 
-  console.warn('[OWN STREET] 접수 실패 코드:', r.code || 'UNKNOWN');
+  console.warn('[OWN STREET] 접수번호를 받지 못함 · 코드:', r.code || 'UNKNOWN');
+
+  // 서버의 분명한 답이 "저장 안 됨"이 아니면 접수됐을 수도 있다. 같은 clientRef 로만 다시 보내도록 표시해 둔다.
+  if (state.pending && !NOT_SAVED_CODES.includes(r.code)) state.pending.unconfirmed = true;
+
+  // 답이 없었다 = 접수됐는지 모른다. "실패"라고 하지 않는다.
+  if (isNoAnswer(r)) {
+    showFailDialog('unknown');
+    return;
+  }
 
   if (r.code === 'INVALID_INPUT' && Array.isArray(r.fields)) {
     const msg = { name: '이름을 다시 확인해주세요.', phone: '전화번호를 다시 확인해주세요. 예) 010-1234-5678', url: '주소를 다시 확인해주세요. https:// 로 시작하는 주소를 붙여넣어 주세요.' };
@@ -378,11 +498,48 @@ function handleResult(r) {
   let detail = '잠시 후 다시 시도해주세요.';
   if (r.code === 'AUTH_INVALID' || r.code === 'TOKEN_ERROR') {
     detail = '로그인 정보를 확인하지 못했습니다. LOGOUT 후 다시 로그인한 뒤 시도해주세요.';
-  } else if (r.code === 'NETWORK' || r.code === 'TIMEOUT') {
-    detail = '인터넷 연결을 확인하고 잠시 후 다시 시도해주세요.';
   }
-  $('failText').textContent = detail;
-  $('failDialog').showModal();
+  showFailDialog('failed', detail);
+}
+
+/**
+ * 실패 창 하나를 두 모양으로 쓴다.
+ *  failed  : 서버가 분명히 "안 됐다"고 답했을 때 (기존 문구)
+ *  unknown : 답이 없어서 접수됐는지 확인하지 못했을 때. 실패라고도 성공이라고도 하지 않는다.
+ */
+function showFailDialog(mode, detail) {
+  const unknown = mode === 'unknown';
+  failMode = mode;
+  const dlg = $('failDialog');
+  const kicker = dlg.querySelector('.modal-kicker');
+  kicker.classList.toggle('modal-kicker-error', !unknown);
+  kicker.querySelector('.font-display').textContent = unknown ? 'NOT CONFIRMED' : 'REQUEST FAILED';
+  $('failTitle').textContent = unknown ? '접수됐는지 아직 확인하지 못했습니다.' : '접수에 실패했습니다.';
+  const text = $('failText');
+  text.textContent = unknown ? UNKNOWN_TEXT : (detail || '잠시 후 다시 시도해주세요.');
+  text.style.whiteSpace = 'pre-line';
+  $('retryBtn').textContent = unknown ? '다시 확인' : '다시 시도';
+  contactBtn().hidden = !(unknown && contactHref());
+  dlg.showModal();
+}
+
+function contactHref() {
+  const u = String(CFG.contactUrl || '').trim();
+  return /^https:\/\//.test(u) ? u : '';
+}
+function contactBtn() {
+  let b = $('failContactBtn');
+  if (!b) {
+    b = document.createElement('button');
+    b.type = 'button';
+    b.id = 'failContactBtn';
+    b.className = 'btn-modal btn-modal-line font-display';
+    b.textContent = '카카오톡 문의';
+    b.hidden = true;
+    b.addEventListener('click', () => { const h = contactHref(); if (h) window.open(h, '_blank', 'noopener'); });
+    $('retryBtn').insertAdjacentElement('afterend', b);
+  }
+  return b;
 }
 
 function setSending(on) {
@@ -391,6 +548,7 @@ function setSending(on) {
   btn.disabled = on;
   btn.textContent = on ? 'SENDING...' : 'REQUEST';
   btn.setAttribute('aria-busy', on ? 'true' : 'false');
+  if (!on) hideStatus();
   ['name', 'phone', 'url', 'consent'].forEach((id) => { $(id).disabled = on; });
 }
 

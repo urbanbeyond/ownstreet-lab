@@ -425,6 +425,43 @@ group('11. 소스 파일 점검 (비밀값·ID 가 코드에 없는지)');
 }
 
 /* ------------------------------------------------------------ */
+group('12. 단계별 시간 로그 (동작은 그대로, 고객 정보는 로그에 없음)');
+{
+  const env = freshEnv();
+  const body = v2Body({ clientRef: 'log-ref-0001-aaaa', name: '로그확인이름', address: '로그확인시 가상구 비밀로 99', memo: '로그확인메모', story: '로그확인한줄' });
+  const r = env.post(body);
+  const timing = () => env.logs.filter((l) => l[0] === 'log' && /^\[타이밍\]/.test(l[1])).map((l) => l[1]);
+  eq('성공 요청: 타이밍 로그가 한 줄', timing().length, 1);
+  const line = timing()[0];
+  check('결과와 접수번호가 들어 있다', /결과=ok OS-0001 /.test(line), line);
+  check('합계 시간이 있다', /합계 \d+ms/.test(line), line);
+  ['로그인확인', '입력확인', '잠금대기', '시트열기+머리글', '중복찾기', '번호계산', '쓰기', '다시읽기', '번호기록'].forEach((step) => {
+    check('단계 "' + step + '" 시간이 있다', new RegExp(step.replace('+', '\\+') + ' \\d+ms').test(line), line);
+  });
+  check('시트 줄 수(숫자)가 있다', /시트 줄 수 \d+/.test(line), line);
+  const everything = env.logs.map((l) => l[1]).join('\n');
+  ['tester-a@example.test', '로그확인이름', '로그확인시', '비밀로', '로그확인메모', '로그확인한줄', '010-0000-0001', 'tokA', 'example.test/share', 'log-ref-0001'].forEach((secret) => {
+    check('로그에 "' + secret + '" 가 없다', everything.indexOf(secret) === -1, everything);
+  });
+  eq('응답 모양은 그대로', Object.keys(r).sort().join(), 'created_at,ok,request_id,v');
+
+  env.post(body);
+  check('중복 요청: 결과에 duplicate 표시', timing().some((x) => /결과=ok OS-0001 \(duplicate\)/.test(x)), timing());
+  env.post(v2Body({ idToken: fakeToken('bad') }));
+  check('로그인 실패: 결과=AUTH_INVALID, 잠금·쓰기 단계는 없다', timing().some((x) => /결과=AUTH_INVALID/.test(x) && !/잠금대기/.test(x) && !/쓰기/.test(x)), timing());
+  env.post(v2Body({ size: 'Z' }));
+  check('입력 오류: 결과=INVALID_INPUT', timing().some((x) => /결과=INVALID_INPUT/.test(x)), timing());
+  env.sheet().hooks.dropWrites = true;
+  env.post(v2Body());
+  check('저장 확인 실패: 타이밍 줄에 결과=EXCEPTION, 단계는 쓰기까지 (줄은 계속 남음)', timing().some((x) => /결과=EXCEPTION/.test(x) && /쓰기 \d+ms/.test(x) && !/다시읽기/.test(x)), timing());
+  env.sheet().hooks.dropWrites = false;
+  const busy = freshEnv({ lockOk: false });
+  busy.post(v2Body());
+  check('잠금 실패: 결과=BUSY + 잠금대기 시간', busy.logs.some((l) => /결과=BUSY/.test(l[1]) && /잠금대기 \d+ms/.test(l[1])), busy.logs);
+  eq('이 모든 요청 뒤에도 접수번호 규칙은 그대로 (성공 1건만 저장)', env.sheet().dataRows().length, 1);
+}
+
+/* ------------------------------------------------------------ */
 console.log('\n==============================');
 console.log('통과 ' + passed + ' / 실패 ' + failed + ' / 합계 ' + (passed + failed));
 if (failed) {

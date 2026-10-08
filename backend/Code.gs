@@ -104,7 +104,36 @@ function doGet() {
   });
 }
 
+/**
+ * 접수 요청 처리. 동작은 processRequest_ 가 하고, 여기서는 단계별 걸린 시간을 실행 로그에 한 줄로 남긴다.
+ * (2026-10-09 LAB 시험에서 doPost 가 37.853초 걸렸는데 어느 단계가 길었는지 알 수 없었다.)
+ * 로그에는 단계 이름, 밀리초, 결과 코드, 접수번호, 시트 줄 수만 남긴다.
+ * 이메일·이름·전화번호·주소·토큰·시트 ID 는 남기지 않는다.
+ */
 function handleRequest_(body) {
+  const t = { start: Date.now(), last: Date.now(), steps: [], rows: -1 };
+  let outcome = 'EXCEPTION';
+  try {
+    const result = processRequest_(body, t);
+    outcome = result.ok === true
+      ? 'ok ' + result.request_id + (result.duplicate ? ' (duplicate)' : '')
+      : String(result.code);
+    return result;
+  } finally {
+    console.log('[타이밍] 결과=' + outcome + ' | 합계 ' + (Date.now() - t.start) + 'ms | '
+      + (t.steps.length ? t.steps.join(' | ') : '(단계 없음)')
+      + (t.rows >= 0 ? ' | 시트 줄 수 ' + t.rows : ''));
+  }
+}
+
+/** 직전 mark_ 이후 걸린 시간을 단계 이름과 함께 기록 */
+function mark_(t, label) {
+  const now = Date.now();
+  t.steps.push(label + ' ' + (now - t.last) + 'ms');
+  t.last = now;
+}
+
+function processRequest_(body, t) {
   if (body.action !== 'request') return { ok: false, code: 'BAD_REQUEST' };
 
   // 0) 요청 형식 버전: v 없음 = 옛 형식(v0), v: 2 = 새 형식. 모르는 새 버전은 받지 않는다.
@@ -118,6 +147,7 @@ function handleRequest_(body) {
 
   // 1) 로그인 확인 (Google 서버에 직접 확인)
   const user = verifyUser_(body.idToken);
+  mark_(t, '로그인확인');
   if (user.status === 'invalid') return { ok: false, code: 'AUTH_INVALID' };
   if (user.status === 'config') return { ok: false, code: 'NOT_CONFIGURED' };
   if (user.status !== 'ok') return { ok: false, code: 'AUTH_UNAVAILABLE' };
@@ -147,22 +177,30 @@ function handleRequest_(body) {
   if (badFields.length) return { ok: false, code: 'INVALID_INPUT', fields: badFields };
   if (body.consent !== true) return { ok: false, code: 'CONSENT_REQUIRED' };
 
+  mark_(t, '입력확인');
+
   // 3) 동시에 여러 명이 신청해도 번호가 겹치지 않도록 잠금
   const lock = LockService.getScriptLock();
-  if (!lock.tryLock(30000)) return { ok: false, code: 'BUSY' };
+  const gotLock = lock.tryLock(30000);
+  mark_(t, '잠금대기');
+  if (!gotLock) return { ok: false, code: 'BUSY' };
   try {
     const sheet = getSheet_();
+    mark_(t, '시트열기+머리글');
+    t.rows = sheet.getLastRow();
 
     // 같은 사람이 같은 clientRef 로 다시 보내면, 시트에 이미 저장된 줄의 번호를 돌려준다.
     // (캐시가 아니라 시트에서 찾으므로 캐시가 사라져도 중복 줄이 생기지 않는다)
     if (clientRef) {
       const dup = findByClientRef_(sheet, user.email, clientRef);
+      mark_(t, '중복찾기');
       if (dup) {
         return { ok: true, v: SERVER_VERSION, request_id: dup.id, created_at: dup.createdAt, duplicate: true };
       }
     }
 
     const seq = nextSequence_(sheet);
+    mark_(t, '번호계산');
     const requestId = formatId_(seq);
     const createdAt = Utilities.formatDate(new Date(), TIMEZONE, 'yyyy-MM-dd HH:mm:ss');
     const consentAt = createdAt; // 동의(consent: true)가 담긴 요청을 서버가 받은 시각
@@ -178,6 +216,7 @@ function handleRequest_(body) {
     rowRange.setNumberFormat('@');
     rowRange.setValues([values]);
     SpreadsheetApp.flush();
+    mark_(t, '쓰기');
 
     // 4) 실제로 저장되었는지 다시 읽어서 확인 (맨 끝 열까지 읽어서, 줄이 끝까지 써졌는지도 본다)
     const saved = sheet.getRange(row, 1, 1, HEADERS.length).getDisplayValues()[0];
@@ -191,7 +230,10 @@ function handleRequest_(body) {
       }
     }
 
+    mark_(t, '다시읽기');
+
     PropertiesService.getScriptProperties().setProperty(SEQ_PROPERTY, String(seq));
+    mark_(t, '번호기록');
 
     return { ok: true, v: SERVER_VERSION, request_id: requestId, created_at: createdAt };
   } finally {
