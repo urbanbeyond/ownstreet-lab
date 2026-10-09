@@ -1,0 +1,13 @@
+{
+  "episode": "EP003",
+  "title": "저장은 됐는데, 화면은 실패라고 했다",
+  "scheduled_for": "2026-10-10T04:00:00+09:00",
+  "checked_at": "2026-10-10T04:21:00+09:00",
+  "via": "Metricool",
+  "results": [
+    {"network": "facebook", "status": "published", "url": "https://facebook.com/1428462956051823/posts/1455743366657115", "text": "전문 + 오늘의 풀이"},
+    {"network": "instagram", "status": "published", "url": "https://www.instagram.com/p/DeSNrm6mzQ1/", "text": "줄인 글"},
+    {"network": "threads", "status": "published", "url": "https://www.threads.com/@urbanbeyond.kr/post/DeSNqv6FVph", "text": "짧은 소개"},
+    {"network": "pinterest", "status": "published", "url": "https://www.pinterest.es/pin/1076641854699596009", "text": "제목과 설명"}
+  ]
+}
