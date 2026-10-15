@@ -64,30 +64,30 @@ jobs:
 
       - name: Build today's prompt
         if: steps.pause.outputs.paused == 'false'
-        id: prompt
         run: |
           {
-            echo "prompt<<__PROMPT__"
             echo "TODAY: ${{ steps.today.outputs.date }}"
             echo "MODE: ${{ steps.today.outputs.mode }}"
             echo
             cat scripts/daily_prompt.txt
-            echo "__PROMPT__"
-          } >> "$GITHUB_OUTPUT"
+          } > "$RUNNER_TEMP/prompt.txt"
 
-      # AI 단계에는 Meta·Netlify 토큰과 LAB 주소를 넘기지 않는다
+      - name: Set up Node (Claude CLI)
+        if: steps.pause.outputs.paused == 'false'
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      # claude-code-action@v1 이 exit code 2 로 실패해 CLI 직접 호출로 바꿈
+      # (diag 로 CLI+토큰 정상 확인됨). Meta·Netlify 토큰·LAB 주소는 이 단계에 넘기지 않는다.
       - name: Run AI team
         if: steps.pause.outputs.paused == 'false'
         continue-on-error: true
-        uses: anthropics/claude-code-action@v1
-        with:
-          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          prompt: ${{ steps.prompt.outputs.prompt }}
-          claude_args: |
-            --model sonnet
-            --max-turns 60
-            --allowedTools "Read,Write,Edit,MultiEdit,Glob,Grep,Bash,Agent,Task,TodoWrite"
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+        run: |
+          npm install -g @anthropic-ai/claude-code
+          cat "$RUNNER_TEMP/prompt.txt" | claude -p --model sonnet --dangerously-skip-permissions
 
       - name: Check app health (for tomorrow's PM)
         if: steps.pause.outputs.paused == 'false'
