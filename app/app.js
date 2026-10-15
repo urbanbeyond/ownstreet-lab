@@ -1,68 +1,93 @@
 /* ============================================================
    OWN STREET — app.js
-   실제 Google 로그인(Firebase Authentication) + 실제 접수(Apps Script)
+   대화형(채팅) 주문 + 실제 Google 로그인(Firebase) + 실제 접수(Apps Script)
    이 파일은 수정하지 않아도 됩니다. 설정은 config.js 에서 합니다.
+
+   구조: step(지금 묻는 항목) / answers(chat.data, 손님이 답한 값) / pending(재시도용 대기 정보)
+   를 분리해서 관리한다. 입력 영역은 네 가지: text / chips / login / confirm.
+
+   v0.2 안전장치(한 페이지 폼 시절 app.js 에서 그대로 옮김, 건드리지 않음):
+   - 한 번 기다리는 한도 60초(REQUEST_TIMEOUT_MS), 10초 지나면 "오래 걸리고 있어요" 안내
+   - 답이 없으면(시간 초과·연결 끊김·해석 못 하는 응답) 같은 clientRef 로 한 번 더 자동 확인
+   - 접수번호는 서버가 ok:true 와 OS-숫자(v>=2)를 돌려줬을 때만 보여준다
+   - NOT_SAVED_CODES: 서버가 저장 전에 끝낸 응답인지 구분해서, 저장됐을 수 있는 응답은 unconfirmed 로 남긴다
    ============================================================ */
 
 // Google 공식 Firebase 로그인 라이브러리 (v12.19.0, 사이트 폴더 안에 포함)
 const FIREBASE_LIB_URL = './vendor/firebase-12.19.0.js';
-// 한 번 기다리는 한도. 30초 → 60초 (2026-10-09 LAB 시험에서 서버가 37.9초 걸려 화면이 먼저 끊었다.
-// 서버가 잠금을 기다리는 시간만 최대 30초이고 저장 시간이 따로 붙으므로 30초는 처음부터 빠듯했다.)
 const REQUEST_TIMEOUT_MS = 60000;
 const SLOW_NOTICE_MS = 10000;   // 이 시간 안에 답이 없으면 "오래 걸리고 있어요"를 보여 준다
 const RECHECK_DELAY_MS = 2000;  // 답이 없을 때 같은 요청으로 다시 확인하기 전에 잠깐 쉰다
+const REQUIRED_SERVER_VERSION = 2; // 사이즈·주소·요청사항을 저장하는 접수 서버
 const RECEIPT_PATTERN = /^OS-\d{4,}$/;
 const URL_PATTERN = /^https?:\/\/[^\s\/?#]+\.[^\s\/?#]+([\/?#]\S*)?$/i;
+const DRAFT_KEY = 'ownstreet.order.v1';
+// 질문 순서 (ROADMAP Stage 1): 이미지 링크 → 한 줄 이야기(건너뛰기 가능) → 사이즈 → 이름 → 전화번호 → 주소 → 배송 요청 → 확인 → 접수
+// 로그인은 이름 질문 앞(접수에 꼭 필요해지는 시점)에 따로 둔다 (10-11 회의 결정).
+const STEPS = ['url', 'story', 'size', 'name', 'phone', 'address', 'memo'];
+// 진행 단계 점("3/8") 표시는 넣지 않았다 — 건너뛰기·되돌리기가 있으면 숫자가 틀릴 위험이 있다고 판단했다
+// (10-11 회의 결정: 윤 개발자 판단에 맡김). 상단 바는 로고와 로그인 상태만 둔다.
+
+// 서버가 이 코드를 돌려줬다면 아무것도 저장되지 않았다 (Code.gs 는 저장 전에 이 검사들을 끝낸다)
+const NOT_SAVED_CODES = ['NO_ENDPOINT', 'NOT_READY', 'TOKEN_ERROR', 'BAD_REQUEST', 'VERSION_MISMATCH', 'NOT_CONFIGURED',
+  'AUTH_INVALID', 'AUTH_UNAVAILABLE', 'INVALID_INPUT', 'CONSENT_REQUIRED', 'BUSY'];
+const SLOW_TEXT = '평소보다 오래 걸리고 있어요. 화면을 닫지 말고 기다려 주세요.';
+const CHECK_TEXT = '접수 상태를 확인하고 있어요. 화면을 닫지 마세요.';
+const CHECK_SLOW_TEXT = '접수 상태를 확인하고 있어요. 평소보다 오래 걸리고 있어요. 화면을 닫지 마세요.';
+const OLD_CHECK_SLOW_TEXT = '이전에 보낸 요청이 접수됐는지 먼저 확인하고 있어요. 평소보다 오래 걸리고 있어요. 화면을 닫지 마세요.';
+const UNKNOWN_TEXT = "'다시 확인'을 누르면 같은 요청으로 확인하므로 두 번 접수되지 않습니다.\n접수번호를 받기 전에는 접수됐다고 말씀드릴 수 없습니다.\n급하면 카카오톡 채널로 문의해 주세요.";
 
 const CFG = window.OWN_STREET_CONFIG || {};
+const SIZES = Object.keys((CFG.sizeTable && CFG.sizeTable.rows) || {});
+const PAY = CFG.payment || {};
 const $ = (id) => document.getElementById(id);
 
 const state = {
-  fb: null,        // firebase-auth 모듈
-  auth: null,      // Auth 인스턴스
-  user: null,      // 로그인한 사용자 (없으면 null)
-  ready: false,    // 로그인 기능 사용 가능 여부
-  sending: false,
+  fb: null,          // firebase-auth 모듈
+  auth: null,        // Auth 인스턴스
+  user: null,        // 로그인한 사용자 (없으면 null)
+  authMode: 'loading', // loading | ok | inapp | unavailable
+  serverOk: false,   // 접수 서버 버전 확인 결과
   // 재시도 시 같은 요청으로 인식시키기 위한 정보 { sig, uid, data, clientRef, tries, unconfirmed }
   // unconfirmed: 서버가 접수했는지 모르는 상태. 이 동안은 같은 clientRef 로만 다시 보낸다.
   pending: null
 };
 
-// 서버가 이 코드를 돌려줬다면 아무것도 저장되지 않았다 (Code.gs 는 저장 전에 이 검사들을 끝낸다)
-const NOT_SAVED_CODES = ['NO_ENDPOINT', 'TOKEN_ERROR', 'BAD_REQUEST', 'VERSION_MISMATCH', 'NOT_CONFIGURED',
-  'AUTH_INVALID', 'AUTH_UNAVAILABLE', 'INVALID_INPUT', 'CONSENT_REQUIRED', 'BUSY'];
-const SLOW_TEXT = '평소보다 오래 걸리고 있어요. 화면을 닫지 말고 기다려 주세요.';
-const CHECK_TEXT = '접수 상태를 확인하고 있어요. 화면을 닫지 마세요.';
-const CHECK_SLOW_TEXT = '접수 상태를 확인하고 있어요. 평소보다 오래 걸리고 있어요. 화면을 닫지 마세요.';
-const OLD_CHECK_TEXT = '이전에 보낸 요청이 접수됐는지 먼저 확인하고 있어요. 화면을 닫지 마세요.';
-const UNKNOWN_TEXT = "'다시 확인'을 누르면 같은 요청으로 확인하므로 두 번 접수되지 않습니다.\n접수번호를 받기 전에는 접수됐다고 말씀드릴 수 없습니다.\n급하면 카카오톡 채널로 문의해 주세요.";
-let failMode = 'failed'; // 실패 창이 지금 어느 모양인지: 'failed' | 'unknown'
+const chat = {
+  started: false,
+  active: false,     // 사용자가 대화를 누르기 시작했는지 (자동 스크롤·포커스 기준)
+  step: null,        // 지금 묻고 있는 항목 (STEPS 의 값, 'login', 'confirm', 'order', 'done')
+  editing: false,    // 확인 카드에서 [수정]으로 들어온 경우
+  busy: false,
+  data: {},          // answers: 손님이 답한 값
+  runId: 0           // 다시 시작했을 때 이전 대기 중 말풍선을 무시하기 위한 번호
+};
 
 init();
 
 function init() {
   renderStaticInfo();
   bindDialogs();
-  bindForm();
-  $('readyBadge').addEventListener('click', (e) => { e.preventDefault(); goToForm(); });
-  $('loginBtn').addEventListener('click', login);
   $('logoutBtn').addEventListener('click', logout);
-  setupAuth();
+  $('chatReset').addEventListener('click', () => resetChat(true));
+  state.authReady = setupAuth();
+  initChat();
 }
 
-/* ---------------- 로그인 ---------------- */
+/* ============================================================
+   로그인
+   ============================================================ */
 
 async function setupAuth() {
   if (isInAppBrowser()) {
-    setupInAppNotice();
-    showAuthState('inapp');
+    state.authMode = 'inapp';
     return;
   }
 
   const fbc = CFG.firebase || {};
   if (!fbc.apiKey || !fbc.authDomain || !fbc.projectId || !fbc.appId) {
     console.warn('[OWN STREET] config.js 의 firebase 값이 비어 있어 로그인을 시작할 수 없습니다.');
-    showAuthState('unavailable');
+    state.authMode = 'unavailable';
     return;
   }
 
@@ -75,11 +100,13 @@ async function setupAuth() {
     auth.languageCode = 'ko';
     state.fb = authMod;
     state.auth = auth;
-    state.ready = true;
+    state.authMode = 'ok';
 
     authMod.onAuthStateChanged(auth, (user) => {
+      const wasUser = state.user;
       state.user = user || null;
       renderUser();
+      if (wasUser && !state.user) clearSessionData(); // 로그아웃 시 개인정보 삭제
     }, (err) => {
       console.error('[OWN STREET] 로그인 상태 확인 오류', err);
       state.user = null;
@@ -87,45 +114,39 @@ async function setupAuth() {
     });
   } catch (err) {
     console.error('[OWN STREET] Firebase 로드 실패', err);
-    $('unavailableMsg').textContent = '로그인 기능을 불러오지 못했습니다. 인터넷 연결을 확인한 뒤 새로고침해주세요.';
-    showAuthState('unavailable');
+    state.authMode = 'unavailable';
   }
 }
 
+/** 실제 Google 로그인. 결과: { ok: true } 또는 { ok: false, message } */
 async function login() {
-  if (!state.ready) {
-    scrollToId('top');
-    return;
+  await state.authReady; // 로그인 기능이 아직 불러와지는 중이면 기다림
+  if (state.authMode !== 'ok') {
+    return { ok: false, message: '지금은 로그인을 준비하고 있습니다.\n잠시 후 다시 시도해주세요.' };
   }
-  hideAuthMsg();
-  const btn = $('loginBtn');
-  btn.disabled = true;
   try {
     const provider = new state.fb.GoogleAuthProvider();
     provider.setCustomParameters({ prompt: 'select_account' });
-    await state.fb.signInWithPopup(state.auth, provider);
-    // 로그인 성공 → 다음 할 일(요청 작성)로 안내
-    setTimeout(() => scrollToId('request'), 150);
+    const cred = await state.fb.signInWithPopup(state.auth, provider);
+    state.user = cred.user || state.auth.currentUser || state.user;
+    renderUser();
+    return { ok: true };
   } catch (err) {
     console.error('[OWN STREET] 로그인 오류', err && err.code, err);
-    const msg = loginErrorMessage(err && err.code);
-    if (msg) showAuthMsg(msg);
-  } finally {
-    btn.disabled = false;
+    return { ok: false, message: loginErrorMessage(err && err.code) };
   }
 }
 
 async function logout() {
-  if (!state.ready) return;
+  if (state.authMode !== 'ok') return;
   const btn = $('logoutBtn');
   btn.disabled = true;
   try {
     await state.fb.signOut(state.auth);
     state.pending = null;
-    showAuthMsg('로그아웃되었습니다.');
+    clearSessionData();
   } catch (err) {
     console.error('[OWN STREET] 로그아웃 오류', err);
-    showAuthMsg('로그아웃하지 못했습니다. 새로고침한 뒤 다시 시도해주세요.');
   } finally {
     btn.disabled = false;
   }
@@ -136,9 +157,9 @@ function loginErrorMessage(code) {
     case 'auth/popup-closed-by-user':
     case 'auth/cancelled-popup-request':
     case 'auth/user-cancelled':
-      return '로그인이 취소되었습니다. 다시 누르면 계정을 선택할 수 있습니다.';
+      return '로그인이 취소됐습니다.\n다시 누르면 계정을 선택할 수 있습니다.';
     case 'auth/popup-blocked':
-      return '로그인 창이 차단되었습니다. 브라우저 주소창 옆의 팝업 차단을 해제한 뒤 다시 눌러주세요.';
+      return '로그인 창이 차단됐습니다.\n주소창 옆의 팝업 차단을 해제한 뒤 다시 눌러주세요.';
     case 'auth/network-request-failed':
       return '인터넷 연결을 확인한 뒤 다시 시도해주세요.';
     case 'auth/unauthorized-domain':
@@ -147,14 +168,14 @@ function loginErrorMessage(code) {
     case 'auth/api-key-not-valid.-please-pass-a-valid-api-key.':
     case 'auth/configuration-not-found':
     case 'auth/argument-error':
-      return '로그인 설정이 아직 끝나지 않았습니다. 잠시 후 다시 방문해주세요.';
+      return '로그인 설정이 아직 끝나지 않았습니다.\n잠시 후 다시 방문해주세요.';
     case 'auth/web-storage-unsupported':
     case 'auth/operation-not-supported-in-this-environment':
-      return '이 브라우저에서는 로그인할 수 없습니다. Chrome 또는 Safari에서 열어주세요.';
+      return '이 브라우저에서는 로그인할 수 없습니다.\nChrome 또는 Safari에서 열어주세요.';
     case 'auth/too-many-requests':
       return '잠시 후 다시 시도해주세요.';
     default:
-      return '로그인 중 문제가 생겼습니다. 다시 시도해주세요.';
+      return '로그인 중 문제가 생겼습니다.\n다시 시도해주세요.';
   }
 }
 
@@ -163,7 +184,6 @@ function renderUser() {
   if (u) {
     const name = u.displayName || (u.email ? u.email.split('@')[0] : '');
     $('userName').textContent = name;
-    $('userEmail').textContent = u.email || '';
     $('avatarInitial').textContent = (name || '?').trim().charAt(0).toUpperCase();
     const img = $('avatarImg');
     if (u.photoURL) {
@@ -174,28 +194,13 @@ function renderUser() {
       img.hidden = true;
       $('avatarInitial').hidden = false;
     }
-    showAuthState('in');
     $('userChip').hidden = false;
     $('topTag').hidden = true;
-    $('loginGate').hidden = true;
   } else {
-    showAuthState('out');
     $('userChip').hidden = true;
     $('topTag').hidden = false;
-    $('loginGate').hidden = false;
   }
 }
-
-function goToForm() {
-  scrollToId('request');
-  setTimeout(() => $('name').focus({ preventScroll: true }), 400);
-}
-
-function showAuthState(name) {
-  document.querySelectorAll('.auth-state').forEach((el) => { el.hidden = el.dataset.state !== name; });
-}
-function showAuthMsg(text) { const m = $('authMsg'); m.textContent = text; m.hidden = false; }
-function hideAuthMsg() { const m = $('authMsg'); m.textContent = ''; m.hidden = true; }
 
 /* 카카오톡·인스타그램 등 앱 안 브라우저: Google이 로그인을 막으므로 바깥 브라우저로 안내 */
 function isInAppBrowser() {
@@ -203,154 +208,362 @@ function isInAppBrowser() {
   return /KAKAOTALK|Instagram|FBAN|FBAV|FB_IAB|NAVER\(inapp|Line\/|DaumApps|everytimeApp|; wv\)/i.test(ua);
 }
 
-function setupInAppNotice() {
+function inAppKind() {
   const ua = navigator.userAgent || '';
-  const here = location.href;
-  const isKakao = /KAKAOTALK/i.test(ua);
-  const isLine = /Line\//i.test(ua);
-  const isAndroid = /Android/i.test(ua);
-  const openBtn = $('openExternalBtn');
-
-  if (!isKakao && !isLine && !isAndroid) {
-    // iOS 앱 안 브라우저: 자동으로 열 수 있는 방법이 없음
-    openBtn.hidden = true;
-    $('inappHint').textContent = '화면의 ··· 또는 공유 버튼을 누르고 "Safari로 열기"를 선택해주세요. 또는 주소를 복사해 Safari에 붙여넣어 주세요.';
-  }
-  openBtn.addEventListener('click', () => {
-    if (isKakao) {
-      location.href = 'kakaotalk://web/openExternal?url=' + encodeURIComponent(here);
-    } else if (isLine) {
-      location.href = here + (here.includes('?') ? '&' : '?') + 'openExternalBrowser=1';
-    } else if (isAndroid) {
-      location.href = `intent://${location.host}${location.pathname}${location.search}#Intent;scheme=https;package=com.android.chrome;end`;
-    }
-  });
-  $('copyLinkBtn').addEventListener('click', async () => {
-    const ok = await copyText(here);
-    showAuthMsg(ok ? '주소를 복사했습니다. Chrome 또는 Safari 주소창에 붙여넣어 주세요.' : '주소를 복사하지 못했습니다.');
-  });
+  if (/KAKAOTALK/i.test(ua)) return 'kakao';
+  if (/Line\//i.test(ua)) return 'line';
+  if (/Android/i.test(ua)) return 'android';
+  return 'other'; // iOS 앱 안 브라우저: 자동으로 열 수 있는 방법이 없음
 }
 
-/* ---------------- 요청 폼 ---------------- */
+function openExternalBrowser() {
+  const here = location.href;
+  const kind = inAppKind();
+  if (kind === 'kakao') location.href = 'kakaotalk://web/openExternal?url=' + encodeURIComponent(here);
+  else if (kind === 'line') location.href = here + (here.includes('?') ? '&' : '?') + 'openExternalBrowser=1';
+  else if (kind === 'android') location.href = `intent://${location.host}${location.pathname}${location.search}#Intent;scheme=https;package=com.android.chrome;end`;
+}
 
-function bindForm() {
-  const form = $('requestForm');
-  form.addEventListener('submit', onSubmit);
+/* ============================================================
+   대화형 주문
+   ============================================================ */
 
-  const phone = $('phone');
-  phone.addEventListener('input', () => {
-    const atEnd = phone.selectionStart === phone.value.length;
-    if (atEnd) phone.value = formatPhoneTyping(phone.value);
-    clearFieldError('phone');
+const QUESTIONS = {
+  url: {
+    label: '이미지 링크',
+    ask: 'OWN STREET입니다.\n생성한 이미지가 있는 채팅 링크를 보내주세요.\n공개 링크만 받습니다.',
+    input: { type: 'text', inputmode: 'url', placeholder: 'https://...', maxlength: 2000, autocomplete: 'off', autocapitalize: 'off' },
+    parse(raw) {
+      const v = normalizeUrl(raw);
+      return v ? { value: v } : { error: '링크 형식이 아닙니다.\nhttps:// 로 시작하는 주소를 붙여넣어 주세요.' };
+    }
+  },
+  story: {
+    label: '한 줄 이야기',
+    ask: '이 이미지에 담은 생각이나 이야기를 한 줄로 알려주세요.\n건너뛰어도 됩니다.',
+    input: { type: 'text', placeholder: '예) 처음으로 내가 정한 나의 색', maxlength: 200, autocomplete: 'off' },
+    skip: '건너뛰기',
+    parse(raw) {
+      if (cleanText(raw, 1, 9999) === '') return { value: '' };
+      const v = cleanText(raw, 1, 200);
+      return v ? { value: v } : { error: '한 줄 이야기는 200자까지 입력할 수 있습니다.' };
+    }
+  },
+  size: {
+    label: '사이즈',
+    ask: '사이즈를 골라주세요.',
+    parse(raw) {
+      return SIZES.includes(raw) ? { value: raw } : { error: '버튼에서 사이즈를 골라주세요.' };
+    }
+  },
+  name: {
+    label: '이름',
+    ask: '받는 분 이름을 알려주세요.',
+    input: { type: 'text', placeholder: '홍길동', maxlength: 40, autocomplete: 'name' },
+    parse(raw) {
+      const v = cleanName(raw);
+      return v ? { value: v } : { error: '이름을 다시 확인해주세요.\n40자까지 입력할 수 있습니다.' };
+    }
+  },
+  phone: {
+    label: '연락처',
+    ask: '연락처를 알려주세요.',
+    input: { type: 'tel', inputmode: 'numeric', placeholder: '010-0000-0000', maxlength: 13, autocomplete: 'tel', phone: true },
+    parse(raw) {
+      const v = normalizePhone(raw);
+      return v ? { value: v } : { error: '번호를 다시 확인해주세요.\n예) 010-1234-5678' };
+    }
+  },
+  address: {
+    label: '배송 주소',
+    ask: '배송 주소를 알려주세요.\n상세 주소까지 적어주세요.',
+    input: { type: 'text', placeholder: '도로명 주소 + 동·호수', maxlength: 200, autocomplete: 'street-address' },
+    parse(raw) {
+      const v = cleanText(raw, 5, 200);
+      return v ? { value: v } : { error: '주소를 조금 더 자세히 적어주세요.' };
+    }
+  },
+  memo: {
+    label: '배송 요청',
+    ask: '배송 요청사항이 있으면 적어주세요.',
+    input: { type: 'text', placeholder: '예) 부재 시 문 앞에 두세요', maxlength: 300, autocomplete: 'off' },
+    skip: '없음',
+    parse(raw) {
+      if (cleanText(raw, 1, 9999) === '') return { value: '' };
+      const v = cleanText(raw, 1, 300);
+      return v ? { value: v } : { error: '배송 요청은 300자까지 입력할 수 있습니다.' };
+    }
+  }
+};
+
+function priceLine() {
+  const parts = [PAY.productName || 'STANDARD', '뒷면 프린트'];
+  if (PAY.price) parts.push(formatWon(PAY.price));
+  return parts.join(' · ');
+}
+
+function initChat() {
+  if (state.authMode === 'inapp') {
+    botNow('앱 안 브라우저에서는 주문할 수 없습니다.\nChrome이나 Safari에서 열어주세요.', 'warn');
+    const choices = [];
+    if (inAppKind() !== 'other') choices.push({ label: '브라우저로 열기', primary: true, onPick: openExternalBrowser });
+    else botNow('화면의 ··· 또는 공유 버튼을 누르고 "Safari로 열기"를 선택해주세요.\n또는 주소를 복사해 Safari에 붙여넣어 주세요.');
+    choices.push({
+      label: '주소 복사',
+      onPick: async (btn) => { btn.textContent = (await copyText(location.href)) ? '복사됨' : '복사 실패'; }
+    });
+    setChoices(choices);
+    return;
+  }
+  if (state.authMode === 'unavailable') {
+    botNow('지금은 주문을 준비하고 있습니다.\n잠시 후 다시 방문해주세요.', 'warn');
+    setComposerNone();
+    return;
+  }
+
+  greet();
+  const draft = loadDraft();
+  if (draft) resume(draft);
+  else setChoices([{ label: '주문 시작', primary: true, id: 'chatStart', onPick: () => beginOrder() }]);
+}
+
+function greet() {
+  botNow(priceLine() + '\n배송비 포함');
+}
+
+async function beginOrder() {
+  if (chat.started) return;
+  chat.started = true;
+  chat.active = true;
+  $('chatReset').hidden = false;
+  meSay('주문 시작');
+  await askStep(STEPS[0]);
+}
+
+/** 저장해둔 대화를 다시 그려서 이어가기 (개인정보가 담길 수 있으므로 sessionStorage 에서만 읽는다) */
+function resume(draft) {
+  chat.started = true;
+  chat.data = draft.data;
+  $('chatReset').hidden = false;
+  meSay('주문 시작');
+  let next = null;
+  for (const step of STEPS) {
+    if (!(step in chat.data)) { next = step; break; }
+    botNow(QUESTIONS[step].ask);
+    meSay(displayValue(step, chat.data[step]));
+  }
+  botNow('이어서 진행합니다.');
+  if (next) {
+    // 이름 질문부터는 로그인이 필요하다 (이어하기에서도 같은 문 앞을 지킨다)
+    const needsLogin = STEPS.indexOf(next) >= STEPS.indexOf('name') && !state.user;
+    if (needsLogin) askLogin(); else askStep(next, true);
+  } else {
+    showConfirm(true);
+  }
+}
+
+async function askStep(step, instant) {
+  chat.step = step;
+  const q = QUESTIONS[step];
+  if (instant) botNow(q.ask); else await botSay(q.ask);
+  if (chat.step !== step) return;
+
+  if (step === 'size') {
+    const choices = SIZES.map((s) => ({ label: s, size: true, onPick: () => answer('size', s) }));
+    choices.push({ label: '사이즈표 보기', ghost: true, keep: true, onPick: () => $('sizeDialog').showModal() });
+    setChoices(choices);
+  } else {
+    setTextInput(q, (raw) => answer(step, raw));
+  }
+}
+
+async function answer(step, raw) {
+  if (chat.busy || chat.step !== step) return;
+  const q = QUESTIONS[step];
+  const text = String(raw == null ? '' : raw);
+  if (!q.skip && text.trim() === '') { focusComposer(); return; }
+
+  const res = q.parse(text);
+  chat.active = true;
+  if (res.error) {
+    if (text.trim()) meSay(text.trim().slice(0, 200));
+    await botSay(res.error, 'warn');
+    focusComposer();
+    return;
+  }
+
+  chat.data[step] = res.value;
+  saveDraft();
+  meSay(displayValue(step, res.value));
+  chat.step = null;
+  setComposerNone();
+
+  if (chat.editing) { chat.editing = false; await showConfirm(); return; }
+  const idx = STEPS.indexOf(step);
+  const next = STEPS[idx + 1];
+  if (next) {
+    // 이름 질문 앞에서 로그인 확인 (개인정보 단계에 들어가기 전)
+    if (next === 'name' && !state.user) { await askLogin(); return; }
+    await askStep(next);
+  } else {
+    await showConfirm();
+  }
+}
+
+/** 이름 질문 앞에서 Google 로그인 (접수에 꼭 필요해지는 시점에 둔다) */
+async function askLogin() {
+  chat.step = 'login';
+  await botSay('이제부터는 이름·연락처·주소를 여쭤봅니다.\n접수 확인을 위해 Google 로그인이 필요합니다.');
+  if (chat.step !== 'login') return;
+  showLoginChoice(() => askStep('name'));
+}
+
+function showLoginChoice(onDone) {
+  setChoices([{
+    label: 'Google로 로그인', google: true, id: 'chatLogin',
+    onPick: async () => {
+      if (chat.busy) return;
+      chat.busy = true;
+      setComposerNone();
+      const r = await login();
+      chat.busy = false;
+      if (!r.ok) {
+        await botSay(r.message, 'warn');
+        showLoginChoice(onDone);
+        return;
+      }
+      await botSay((state.user && state.user.email ? state.user.email + '\n' : '') + '로그인됐습니다.');
+      onDone();
+    }
+  }]);
+}
+
+function displayValue(step, value) {
+  if ((step === 'memo' || step === 'story') && !value) return '건너뛰기';
+  return value;
+}
+
+/* ---------- 주문 확인 카드 ---------- */
+
+async function showConfirm(instant) {
+  chat.step = 'confirm';
+  retireCards();
+  if (instant) botNow('주문 내용을 확인해주세요.'); else await botSay('주문 내용을 확인해주세요.');
+
+  const card = el('div', 'card order-card');
+  card.dataset.card = 'confirm';
+  const dl = el('dl', 'order-list');
+  STEPS.forEach((step) => {
+    const row = el('div', 'order-row');
+    row.append(el('dt', 'font-display', QUESTIONS[step].label));
+    const dd = el('dd', step === 'url' ? 'order-val is-url' : 'order-val', displayValue(step, chat.data[step]));
+    const edit = el('button', 'link order-edit', '수정');
+    edit.type = 'button';
+    edit.dataset.edit = step;
+    edit.setAttribute('aria-label', QUESTIONS[step].label + ' 수정');
+    edit.addEventListener('click', () => editStep(step));
+    row.append(dd, edit);
+    dl.append(row);
   });
-  phone.addEventListener('blur', () => {
-    const n = normalizePhone(phone.value);
-    if (n) phone.value = n;
-  });
+  card.append(dl);
 
-  const url = $('url');
-  url.addEventListener('blur', () => {
-    const v = url.value.trim();
-    if (v && !/^[a-z][a-z0-9+.-]*:/i.test(v) && /^[^\s]+\.[^\s]+$/.test(v)) url.value = 'https://' + v;
-  });
+  const total = el('div', 'order-total');
+  total.append(el('span', 'order-total-name', priceLine().replace(/ · [^·]*원$/, '')));
+  total.append(el('span', 'font-display order-total-price', PAY.price ? formatWon(PAY.price) : ''));
+  card.append(total, el('p', 'order-note', '배송비 포함 · 접수 후 카카오페이로 결제'));
 
-  $('name').addEventListener('input', () => clearFieldError('name'));
-  url.addEventListener('input', () => clearFieldError('url'));
-  $('consent').addEventListener('change', () => clearFieldError('consent'));
+  const consentWrap = el('div', 'consent');
+  const label = el('label', 'check');
+  const cb = document.createElement('input');
+  cb.type = 'checkbox';
+  cb.id = 'consent';
+  label.append(cb, el('span', 'box'), el('span', '', '개인정보 수집 및 이용에 동의합니다.'));
+  label.querySelector('.box').setAttribute('aria-hidden', 'true');
+  const info = el('p', 'consent-info', '수집: 이름, 전화번호, 배송 주소, 이미지 URL, Google 이메일 · 목적: 제작 요청 확인, 연락, 배송 ');
+  const more = el('button', 'link', '자세히 보기');
+  more.type = 'button';
+  more.addEventListener('click', () => $('privacyDialog').showModal());
+  info.append(more);
+  const consentErr = el('span', 'err');
+  consentErr.id = 'consentErr';
+  consentErr.hidden = true;
+  consentWrap.append(label, info, consentErr);
+  card.append(consentWrap);
 
-  $('retryBtn').addEventListener('click', () => {
-    $('failDialog').close();
-    // 접수 여부를 모르는 상태의 "다시 확인"은 폼을 다시 읽지 않고, 보냈던 요청 그대로(같은 clientRef) 확인한다
-    if (failMode === 'unknown' && state.pending && state.pending.unconfirmed && state.user) {
-      recheckPending();
+  const order = el('button', 'btn-request btn-request-ko', '주문하기');
+  order.type = 'button';
+  order.id = 'orderBtn';
+  order.addEventListener('click', () => {
+    if (!cb.checked) {
+      consentErr.textContent = '개인정보 수집 및 이용에 동의해주세요.';
+      consentErr.hidden = false;
       return;
     }
-    if (typeof form.requestSubmit === 'function') form.requestSubmit();
-    else form.dispatchEvent(new Event('submit', { cancelable: true }));
+    consentErr.hidden = true;
+    placeOrder();
+  });
+  cb.addEventListener('change', () => { consentErr.hidden = true; });
+  card.append(order);
+
+  appendMsg('bot', card, 'wide');
+  setComposerNone();
+}
+
+/** 예전 확인 카드는 더 누를 수 없게 */
+function retireCards() {
+  document.querySelectorAll('[data-card="confirm"]').forEach((c) => {
+    c.dataset.card = 'old';
+    c.classList.add('is-old');
+    c.querySelectorAll('button, input').forEach((b) => { b.disabled = true; });
+    c.querySelectorAll('[id]').forEach((n) => n.removeAttribute('id'));
   });
 }
 
-async function onSubmit(e) {
-  e.preventDefault();
-  if (state.sending) return;
-  clearAllErrors();
+async function editStep(step) {
+  if (chat.busy) return;
+  chat.active = true;
+  chat.editing = true;
+  retireCards();
+  meSay(QUESTIONS[step].label + ' 수정');
+  await askStep(step);
+}
 
-  // 1. 로그인 확인
+/* ---------- 주문 접수 ---------- */
+
+async function placeOrder() {
+  if (chat.busy) return;
+  chat.active = true;
+  chat.step = 'order';
+  retireCards();
+  meSay('주문하기');
+
   if (!state.user) {
-    const gate = $('loginGate');
-    gate.hidden = false;
-    gate.textContent = '';
-    gate.append('아직 로그인하지 않았습니다. 맨 위의 ');
-    const b = document.createElement('strong'); b.textContent = 'Google로 시작하기'; gate.append(b);
-    gate.append('를 먼저 눌러주세요.');
-    scrollToId('top');
+    await botSay('주문 확인을 위해 Google 로그인이 필요합니다.');
+    showLoginChoice(() => submitOrder());
     return;
   }
-
-  // 2~5. 입력 확인
-  const rawPhone = $('phone').value.trim();
-  const rawUrl = $('url').value.trim();
-  const data = {
-    name: cleanName($('name').value),
-    phone: normalizePhone(rawPhone),
-    url: normalizeUrl(rawUrl)
-  };
-  const errors = [];
-  if (!data.name) errors.push(['name', '이름을 입력해주세요.']);
-  if (!rawPhone) errors.push(['phone', '전화번호를 입력해주세요.']);
-  else if (!data.phone) errors.push(['phone', '전화번호를 다시 확인해주세요. 예) 010-1234-5678']);
-  if (!rawUrl) errors.push(['url', '생성한 이미지의 URL을 입력해주세요.']);
-  else if (!data.url) errors.push(['url', '주소 형식이 올바르지 않습니다. https:// 로 시작하는 주소를 붙여넣어 주세요.']);
-  if (!$('consent').checked) errors.push(['consent', '개인정보 수집 및 이용에 동의해주세요.']);
-
-  if (errors.length) {
-    errors.forEach(([f, m]) => showFieldError(f, m));
-    focusField(errors[0][0]);
-    return;
-  }
-
-  $('phone').value = data.phone;
-  $('url').value = data.url;
-  await send(data);
+  await submitOrder();
 }
 
-async function send(data) {
-  const sig = JSON.stringify([state.user.uid, data.name, data.phone, data.url]);
-  setSending(true);
-  try {
-    // 접수 여부를 모르는 이전 요청이 있고 내용이 바뀌었다면, 새로 보내기 전에 이전 요청부터 확인한다
-    // (이전 요청이 이미 저장됐을 수 있는데 새 clientRef 로 또 보내면 두 번 접수된다)
-    if (state.pending && state.pending.sig !== sig) {
-      if (!(await settleOldPending())) return;
-    }
-    if (!state.pending || state.pending.sig !== sig) {
-      state.pending = { sig, uid: state.user.uid, data, clientRef: newClientRef(), tries: 0, unconfirmed: false };
-    }
-    const pending = state.pending;
-    let result = await attemptRequest(pending, SLOW_TEXT);
-    if (isNoAnswer(result)) {
-      // 답이 없다 = 접수됐는지 모른다. 바로 "실패"라고 하지 않고, 같은 clientRef 로 한 번 더 확인한다.
-      pending.unconfirmed = true;
-      showStatus(CHECK_TEXT);
-      await sleep(RECHECK_DELAY_MS);
-      result = await attemptRequest(pending, CHECK_SLOW_TEXT);
-    }
-    handleResult(result);
-  } finally {
-    setSending(false);
+async function submitOrder() {
+  if (chat.busy) return;
+  const sig = JSON.stringify([state.user.uid, chat.data.url, chat.data.story, chat.data.size,
+    chat.data.name, chat.data.phone, chat.data.address, chat.data.memo]);
+  // 접수 여부를 모르는 이전 요청이 있고 내용이 바뀌었다면, 새로 보내기 전에 이전 요청부터 확인한다
+  // (이전 요청이 이미 저장됐을 수 있는데 새 clientRef 로 또 보내면 두 번 접수된다)
+  if (state.pending && state.pending.sig !== sig) {
+    if (!(await settleOldPending())) return;
   }
+  if (!state.pending || state.pending.sig !== sig) {
+    state.pending = { sig, uid: state.user.uid, data: { ...chat.data }, clientRef: newClientRef(), tries: 0, unconfirmed: false };
+  }
+  await runSubmit(state.pending);
 }
 
-/** 접수 여부를 모르는 채로 닫힌 요청을, 보냈던 그대로(같은 clientRef) 다시 확인한다 */
+/** 접수 여부를 모르는 채로 끊겼던 요청을, 보냈던 그대로(같은 clientRef) 다시 확인한다 */
 async function recheckPending() {
-  if (state.sending || !state.pending || !state.user || state.pending.uid !== state.user.uid) return;
-  setSending(true);
-  try {
-    showStatus(CHECK_TEXT);
-    handleResult(await attemptRequest(state.pending, CHECK_SLOW_TEXT));
-  } finally {
-    setSending(false);
-  }
+  if (chat.busy || !state.pending || !state.user || state.pending.uid !== state.user.uid) return;
+  await runSubmit(state.pending, true);
 }
 
 /** 이전 요청을 확인한다. 새 요청을 보내도 되면 true */
@@ -358,26 +571,94 @@ async function settleOldPending() {
   const old = state.pending;
   // 확인할 수 없거나(다른 계정) 접수 여부를 모르는 상태가 아니면 이전 요청은 버린다
   if (!old.unconfirmed || old.uid !== state.user.uid) { state.pending = null; return true; }
-  showStatus(OLD_CHECK_TEXT);
-  const r = await attemptRequest(old, OLD_CHECK_TEXT);
+  chat.busy = true;
+  const status = botNow('고치기 전에 보냈던 요청을 먼저 확인하고 있어요. 화면을 닫지 마세요.', 'status');
+  const r = await attemptRequest(old, 'old-check-slow');
+  chat.busy = false;
+  status.remove();
   if (isReceipt(r)) {
-    handleResult(r);
-    $('copyMsg').textContent = '고치기 전에 보냈던 요청이 이미 접수되어 있었습니다. 새로 접수하지 않았습니다.';
+    state.pending = null;
+    clearDraft();
+    chat.step = 'done';
+    showComplete(r.request_id, '고치기 전에 보냈던 요청이 이미 접수되어 있었습니다. 새로 접수하지 않았습니다.');
     return false;
   }
   if (r && NOT_SAVED_CODES.includes(r.code)) { state.pending = null; return true; }
-  showFailDialog('unknown');
+  await botSay(UNKNOWN_TEXT, 'warn');
+  setChoices(unknownChoices());
   return false;
+}
+
+async function runSubmit(pending, isRecheck) {
+  chat.busy = true;
+  setComposerNone();
+  const run = chat.runId;
+  const status = botNow(isRecheck ? CHECK_TEXT : '접수 중입니다…', 'status');
+
+  let result;
+  if (isRecheck) {
+    result = await attemptRequest(pending, 'recheck-slow');
+  } else {
+    result = await ensureServer();
+    if (result.ok) result = await attemptRequest(pending, 'slow');
+  }
+
+  if (isNoAnswer(result)) {
+    // 답이 없다 = 접수됐는지 모른다. 바로 "실패"라고 하지 않고, 같은 clientRef 로 한 번 더 확인한다.
+    pending.unconfirmed = true;
+    if (run === chat.runId) status.remove();
+    const status2 = run === chat.runId ? botNow(CHECK_TEXT, 'status') : null;
+    await sleep(RECHECK_DELAY_MS);
+    result = await attemptRequest(pending, 'recheck-slow');
+    chat.busy = false;
+    if (status2) status2.remove();
+    if (run !== chat.runId) return; // 그동안 새 대화가 시작됐으면 화면은 더 바꾸지 않는다 (pending 추적은 계속된다)
+    await handleResult(result || {});
+    return;
+  }
+
+  chat.busy = false;
+  if (run !== chat.runId) return;
+  status.remove();
+  await handleResult(result || {});
+}
+
+/** 접수 서버가 대화형 주문(사이즈·주소 저장)을 지원하는지 확인 */
+async function ensureServer() {
+  if (state.serverOk) return { ok: true };
+  if (!CFG.requestEndpoint) return { ok: false, code: 'NO_ENDPOINT' };
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), REQUEST_TIMEOUT_MS);
+  try {
+    const res = await fetch(CFG.requestEndpoint, { method: 'GET', redirect: 'follow', cache: 'no-store', signal: ctrl.signal });
+    if (!res.ok) return { ok: false, code: 'HTTP_' + res.status };
+    let info;
+    try { info = JSON.parse(await res.text()); } catch { return { ok: false, code: 'BAD_RESPONSE' }; }
+    if (info && info.ready === true && Number(info.version) >= REQUIRED_SERVER_VERSION) {
+      state.serverOk = true;
+      return { ok: true };
+    }
+    console.warn('[OWN STREET] 접수 서버(Apps Script)를 새 버전으로 배포해야 합니다. 현재 버전:', info && info.version);
+    return { ok: false, code: 'NOT_READY' };
+  } catch (err) {
+    return { ok: false, code: err && err.name === 'AbortError' ? 'TIMEOUT' : 'NETWORK' };
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 /**
  * 서버에 한 번 보낸다 (로그인 토큰이 만료됐으면 새로 받아 한 번 더). 걸린 시간과 결과 코드를 콘솔에 남긴다.
  * 콘솔에는 이름·전화번호·이메일·토큰·입력 주소를 남기지 않는다. 시도 횟수, 걸린 시간, 결과 코드만.
  */
-async function attemptRequest(pending, slowText) {
+async function attemptRequest(pending, slowKind) {
   pending.tries += 1;
   const t0 = Date.now();
-  const slow = setTimeout(() => showStatus(slowText), SLOW_NOTICE_MS);
+  const slowText = slowKind === 'recheck-slow' ? CHECK_SLOW_TEXT
+    : slowKind === 'old-check-slow' ? OLD_CHECK_SLOW_TEXT
+    : SLOW_TEXT;
+  let slowEl = null;
+  const slow = setTimeout(() => { slowEl = botNow(slowText, 'status'); }, SLOW_NOTICE_MS);
   let r;
   try {
     r = await postRequest(pending, false);
@@ -387,6 +668,7 @@ async function attemptRequest(pending, slowText) {
     }
   } finally {
     clearTimeout(slow);
+    if (slowEl) slowEl.remove();
   }
   if (!r || typeof r !== 'object') r = { ok: false, code: 'BAD_RESPONSE' };
   console.info('[OWN STREET] 접수 요청 ' + pending.tries + '번째 · ' + (Date.now() - t0) + 'ms · '
@@ -396,7 +678,7 @@ async function attemptRequest(pending, slowText) {
 
 /** 서버가 접수번호를 돌려준 경우만 true. 이 조건을 느슨하게 만들지 않는다. */
 function isReceipt(r) {
-  return !!r && r.ok === true && RECEIPT_PATTERN.test(String(r.request_id || ''));
+  return !!r && r.ok === true && RECEIPT_PATTERN.test(String(r.request_id || '')) && Number(r.v || 0) >= REQUIRED_SERVER_VERSION;
 }
 
 /** 서버의 분명한 답이 아니라 "답이 없음"인 경우: 시간 초과, 연결 끊김, 해석할 수 없는 응답, HTTP 오류 */
@@ -406,21 +688,6 @@ function isNoAnswer(r) {
 }
 
 function sleep(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
-
-function statusEl() {
-  let el = $('sendStatus');
-  if (!el) {
-    el = document.createElement('p');
-    el.id = 'sendStatus';
-    el.className = 'gate';
-    el.setAttribute('role', 'status');
-    el.hidden = true;
-    $('submitBtn').insertAdjacentElement('afterend', el);
-  }
-  return el;
-}
-function showStatus(text) { const el = statusEl(); el.textContent = text; el.hidden = false; }
-function hideStatus() { statusEl().hidden = true; }
 
 async function postRequest(pending, forceRefresh) {
   if (!CFG.requestEndpoint) return { ok: false, code: 'NO_ENDPOINT' };
@@ -441,10 +708,15 @@ async function postRequest(pending, forceRefresh) {
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify({
         action: 'request',
+        v: REQUIRED_SERVER_VERSION,
         idToken,
         name: pending.data.name,
         phone: pending.data.phone,
         url: pending.data.url,
+        size: pending.data.size,
+        address: pending.data.address,
+        memo: pending.data.memo || '',
+        story: pending.data.story || '',
         consent: true,
         clientRef: pending.clientRef
       }),
@@ -462,133 +734,323 @@ async function postRequest(pending, forceRefresh) {
   }
 }
 
-function handleResult(r) {
-  r = r || {};
+async function handleResult(r) {
+  // 스프레드시트 저장이 확인된 경우에만 완료
   if (isReceipt(r)) {
     state.pending = null;
-    $('requestForm').reset();
-    clearAllErrors();
+    clearDraft();
+    chat.step = 'done';
     showComplete(r.request_id);
     return;
   }
 
-  console.warn('[OWN STREET] 접수번호를 받지 못함 · 코드:', r.code || 'UNKNOWN');
+  console.warn('[OWN STREET] 접수 실패 코드:', r.code || 'UNKNOWN');
 
   // 서버의 분명한 답이 "저장 안 됨"이 아니면 접수됐을 수도 있다. 같은 clientRef 로만 다시 보내도록 표시해 둔다.
   if (state.pending && !NOT_SAVED_CODES.includes(r.code)) state.pending.unconfirmed = true;
 
-  // 답이 없었다 = 접수됐는지 모른다. "실패"라고 하지 않는다.
+  // 답이 없었다(여기까지 왔다면 재확인도 끝난 것) = 접수됐는지 모른다. "실패"라고 하지 않는다.
   if (isNoAnswer(r)) {
-    showFailDialog('unknown');
+    await botSay(UNKNOWN_TEXT, 'warn');
+    setChoices(unknownChoices());
     return;
   }
 
   if (r.code === 'INVALID_INPUT' && Array.isArray(r.fields)) {
-    const msg = { name: '이름을 다시 확인해주세요.', phone: '전화번호를 다시 확인해주세요. 예) 010-1234-5678', url: '주소를 다시 확인해주세요. https:// 로 시작하는 주소를 붙여넣어 주세요.' };
-    r.fields.forEach((f) => msg[f] && showFieldError(f, msg[f]));
-    if (r.fields[0]) focusField(r.fields[0]);
-    return;
-  }
-  if (r.code === 'CONSENT_REQUIRED') {
-    showFieldError('consent', '개인정보 수집 및 이용에 동의해주세요.');
-    focusField('consent');
-    return;
+    const field = r.fields.find((f) => STEPS.includes(f));
+    if (field) {
+      await botSay("'" + QUESTIONS[field].label + "' 항목을 다시 확인해주세요.", 'warn');
+      chat.editing = true;
+      await askStep(field);
+      return;
+    }
   }
 
-  let detail = '잠시 후 다시 시도해주세요.';
   if (r.code === 'AUTH_INVALID' || r.code === 'TOKEN_ERROR') {
-    detail = '로그인 정보를 확인하지 못했습니다. LOGOUT 후 다시 로그인한 뒤 시도해주세요.';
+    await botSay('로그인 정보를 확인하지 못했습니다.\n다시 로그인해주세요.', 'warn');
+    showLoginChoice(() => submitOrder());
+    return;
   }
-  showFailDialog('failed', detail);
+
+  let msg = '접수에 실패했습니다.\n잠시 후 다시 시도해주세요.';
+  if (r.code === 'NOT_READY' || r.code === 'NO_ENDPOINT' || r.code === 'NOT_CONFIGURED' || r.code === 'VERSION_MISMATCH') {
+    msg = '지금은 주문을 준비하고 있습니다.\n잠시 후 다시 시도해주세요.';
+  }
+  await botSay(msg, 'warn');
+  const choices = [
+    { label: '다시 시도', primary: true, id: 'retryBtn', onPick: () => { meSay('다시 시도'); submitOrder(); } },
+    { label: '내용 수정', onPick: () => { meSay('내용 수정'); showConfirm(); } }
+  ];
+  if (contactUrl()) choices.push({ label: '카톡 문의', href: contactUrl() });
+  setChoices(choices);
 }
 
-/**
- * 실패 창 하나를 두 모양으로 쓴다.
- *  failed  : 서버가 분명히 "안 됐다"고 답했을 때 (기존 문구)
- *  unknown : 답이 없어서 접수됐는지 확인하지 못했을 때. 실패라고도 성공이라고도 하지 않는다.
- */
-function showFailDialog(mode, detail) {
-  const unknown = mode === 'unknown';
-  failMode = mode;
-  const dlg = $('failDialog');
-  const kicker = dlg.querySelector('.modal-kicker');
-  kicker.classList.toggle('modal-kicker-error', !unknown);
-  kicker.querySelector('.font-display').textContent = unknown ? 'NOT CONFIRMED' : 'REQUEST FAILED';
-  $('failTitle').textContent = unknown ? '접수됐는지 아직 확인하지 못했습니다.' : '접수에 실패했습니다.';
-  const text = $('failText');
-  text.textContent = unknown ? UNKNOWN_TEXT : (detail || '잠시 후 다시 시도해주세요.');
-  text.style.whiteSpace = 'pre-line';
-  $('retryBtn').textContent = unknown ? '다시 확인' : '다시 시도';
-  contactBtn().hidden = !(unknown && contactHref());
-  dlg.showModal();
+/** 접수됐는지 확인하지 못했을 때의 선택지: 같은 clientRef 로만 다시 확인한다 (새로 보내지 않는다) */
+function unknownChoices() {
+  const choices = [{ label: '다시 확인', primary: true, id: 'retryBtn', onPick: () => { meSay('다시 확인'); recheckPending(); } }];
+  if (contactUrl()) choices.push({ label: '카톡 문의', href: contactUrl() });
+  return choices;
 }
 
-function contactHref() {
+/* ---------- 접수 완료 + 결제 안내 ---------- */
+
+function showComplete(id, extraNote) {
+  const done = el('div', 'card done-card');
+  const kicker = el('div', 'modal-kicker');
+  kicker.append(el('span', 'dot'), el('span', 'font-display', 'REQUEST COMPLETE'));
+  const no = el('p', 'font-display receipt', id);
+  no.id = 'receiptNo';
+  done.append(kicker, el('p', 'done-title', '접수됐습니다.'), el('p', 'modal-sub', '접수번호'), no,
+    el('p', 'done-text', '확인 후 연락드리겠습니다.'));
+  if (chat.data.story) done.append(el('p', 'done-story', '"' + chat.data.story + '"'));
+  appendMsg('bot', done, 'wide');
+
+  const link = String(PAY.kakaopayLink || '').trim();
+  if (PAY.price && /^https:\/\//.test(link)) {
+    const pay = el('div', 'card pay-card');
+    pay.id = 'payBox';
+    const head = el('div', 'pay-head');
+    head.append(el('span', 'modal-sub', '결제 금액'));
+    const amount = el('span', 'font-display pay-amount', formatWon(PAY.price));
+    amount.id = 'payAmount';
+    head.append(amount);
+    const guide = el('p', 'pay-guide');
+    guide.append('배송비 포함입니다.', document.createElement('br'), '송금 메시지에 접수번호 ');
+    const ref = el('strong', '', id);
+    ref.id = 'payRef';
+    guide.append(ref, '를 적어주세요.');
+    const btn = el('a', 'btn-kakaopay', '카카오페이로 결제하기');
+    btn.id = 'payLink';
+    btn.href = link;
+    btn.target = '_blank';
+    btn.rel = 'noopener';
+    pay.append(head, guide, btn);
+    if (PAY.kakaopayQr) {
+      const qr = document.createElement('img');
+      qr.className = 'pay-qr';
+      qr.id = 'payQr';
+      qr.alt = '카카오페이 결제 QR 코드';
+      qr.width = 148; qr.height = 148;
+      qr.src = PAY.kakaopayQr;
+      pay.append(qr, el('p', 'pay-qr-note', 'PC에서는 휴대폰 카메라로 QR을 찍어주세요.'));
+    }
+    appendMsg('bot', pay, 'wide');
+  }
+
+  if (extraNote) botNow(extraNote);
+
+  const choices = [{
+    label: '접수번호 복사', id: 'copyBtn', keep: true,
+    onPick: async (btn) => {
+      const ok = await copyText(id);
+      btn.textContent = ok ? '복사됨' : '복사 실패';
+      if (!ok) botNow('복사하지 못했습니다.\n접수번호를 길게 눌러 복사해주세요.', 'warn');
+    }
+  }];
+  if (contactUrl()) choices.push({ label: '카톡 문의', href: contactUrl() });
+  choices.push({ label: '새 주문', id: 'newOrderBtn', onPick: () => resetChat(true) });
+  setChoices(choices);
+  $('chatReset').hidden = true;
+}
+
+function resetChat(autoStart) {
+  chat.runId++;
+  chat.started = false;
+  chat.step = null;
+  chat.editing = false;
+  chat.busy = false;
+  chat.data = {};
+  state.pending = null;
+  clearDraft();
+  $('chatLog').textContent = '';
+  $('chatReset').hidden = true;
+  greet();
+  if (autoStart) { chat.active = true; beginOrder(); }
+  else setChoices([{ label: '주문 시작', primary: true, id: 'chatStart', onPick: () => beginOrder() }]);
+}
+
+/* ---------- 말풍선 ---------- */
+
+function appendMsg(who, content, extra) {
+  const li = el('li', 'msg ' + who + (extra ? ' ' + extra : ''));
+  const log = $('chatLog');
+  const prev = log.lastElementChild;
+  if (who === 'bot' && !(prev && prev.classList.contains('bot'))) {
+    li.append(el('span', 'font-display msg-who', 'OWN STREET'));
+  }
+  if (typeof content === 'string') li.append(el('p', 'bubble', content));
+  else li.append(content);
+  log.append(li);
+  keepInView();
+  return li;
+}
+
+function botNow(text, kind) { return appendMsg('bot', text, kind); }
+
+/** 살짝 간격을 두고 말하기 (움직임 줄이기 설정이면 바로) */
+async function botSay(text, kind) {
+  const run = chat.runId;
+  if (chat.active && !prefersReducedMotion()) await sleep(260);
+  if (run !== chat.runId) return null;
+  return botNow(text, kind);
+}
+
+function meSay(text) { return appendMsg('me', text); }
+
+function keepInView() {
+  if (!chat.active) return;
+  requestAnimationFrame(() => {
+    $('chatInput').scrollIntoView({ block: 'nearest', behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
+  });
+}
+
+/* ---------- 입력 영역 (text / chips / login / confirm) ---------- */
+
+function setComposerNone() { $('chatInput').textContent = ''; }
+
+function setTextInput(q, onSubmit) {
+  const box = $('chatInput');
+  box.textContent = '';
+  const form = el('form', 'composer');
+  form.noValidate = true;
+  const input = document.createElement('input');
+  input.className = 'own-input';
+  input.id = 'chatText';
+  input.setAttribute('aria-label', q.label);
+  const cfg = q.input || {};
+  input.type = cfg.type || 'text';
+  if (cfg.inputmode) input.inputMode = cfg.inputmode;
+  if (cfg.placeholder) input.placeholder = cfg.placeholder;
+  if (cfg.maxlength) input.maxLength = cfg.maxlength;
+  if (cfg.autocomplete) input.autocomplete = cfg.autocomplete;
+  if (cfg.autocapitalize) input.setAttribute('autocapitalize', cfg.autocapitalize);
+  input.setAttribute('autocorrect', 'off');
+  input.spellcheck = false;
+  if (cfg.phone) {
+    input.addEventListener('input', () => {
+      if (input.selectionStart === input.value.length) input.value = formatPhoneTyping(input.value);
+    });
+  }
+  // 한글 IME 조합 중 Enter 로 전송되지 않게 한다 (isComposing 확인)
+  let composing = false;
+  input.addEventListener('compositionstart', () => { composing = true; });
+  input.addEventListener('compositionend', () => { composing = false; });
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && (composing || e.isComposing)) e.preventDefault();
+  });
+  const send = el('button', 'send font-display', '보내기');
+  send.type = 'submit';
+  send.id = 'chatSend';
+  form.append(input, send);
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (composing) return; // 조합 중 제출 막기
+    onSubmit(input.value);
+  });
+  box.append(form);
+
+  if (q.skip) {
+    const row = el('div', 'choices');
+    const skip = el('button', 'choice', q.skip);
+    skip.type = 'button';
+    skip.id = 'chatSkip';
+    skip.addEventListener('click', () => onSubmit(''));
+    row.append(skip);
+    box.append(row);
+  }
+  keepInView();
+  focusComposer();
+}
+
+function setChoices(list) {
+  const box = $('chatInput');
+  box.textContent = '';
+  const row = el('div', 'choices');
+  list.forEach((c) => {
+    let b;
+    if (c.href) {
+      b = el('a', 'choice', c.label);
+      b.href = c.href; b.target = '_blank'; b.rel = 'noopener';
+    } else {
+      b = el('button', 'choice', '');
+      b.type = 'button';
+      if (c.google) b.insertAdjacentHTML('afterbegin', GOOGLE_ICON);
+      b.append(c.label);
+      b.addEventListener('click', () => c.onPick && c.onPick(b));
+    }
+    if (c.primary) b.classList.add('is-primary');
+    if (c.google) b.classList.add('is-google');
+    if (c.ghost) b.classList.add('is-ghost');
+    if (c.size) { b.classList.add('is-size', 'font-display'); b.dataset.size = c.label; }
+    if (c.id) b.id = c.id;
+    row.append(b);
+  });
+  box.append(row);
+  keepInView();
+}
+
+function focusComposer() {
+  if (!chat.active) return;
+  // 키보드가 올라오면 마지막 질문이 가려질 수 있으므로, 포커스 뒤 다시 한 번 아래로 맞춘다 (visualViewport 대응)
+  const input = $('chatText');
+  if (!input) return;
+  setTimeout(() => {
+    input.focus({ preventScroll: true });
+    keepInView();
+  }, 60);
+  if (window.visualViewport) {
+    const onResize = () => { keepInView(); };
+    window.visualViewport.addEventListener('resize', onResize, { once: true });
+  }
+}
+
+const GOOGLE_ICON = '<svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.17-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.91c1.7-1.57 2.69-3.88 2.69-6.62z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.81 5.96-2.18l-2.91-2.26c-.81.54-1.84.86-3.05.86-2.34 0-4.32-1.58-5.03-3.71H.96v2.33A9 9 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.97 10.71A5.4 5.4 0 0 1 3.68 9c0-.59.1-1.17.29-1.71V4.96H.96A9 9 0 0 0 0 9c0 1.45.35 2.82.96 4.04l3.01-2.33z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58C13.46.93 11.43 0 9 0A9 9 0 0 0 .96 4.96l3.01 2.33C4.68 5.16 6.66 3.58 9 3.58z"/></svg>';
+
+/* ---------- 작성 중인 주문 임시 저장 (같은 탭에서 새로고침해도 이어하기) ----------
+   개인정보(이름·전화번호·주소 등 손님이 입력한 값)가 담길 수 있으므로 sessionStorage 에만 둔다.
+   localStorage 에는 절대 두지 않는다. 탭을 닫으면 사라지고, 로그아웃 시에도 지운다. */
+
+function saveDraft() {
+  try { sessionStorage.setItem(DRAFT_KEY, JSON.stringify({ data: chat.data, at: Date.now() })); } catch (e) { /* 저장 불가 환경은 무시 */ }
+}
+function clearDraft() {
+  try { sessionStorage.removeItem(DRAFT_KEY); } catch (e) { /* 무시 */ }
+}
+function loadDraft() {
+  try {
+    const raw = JSON.parse(sessionStorage.getItem(DRAFT_KEY) || 'null');
+    if (!raw || typeof raw.data !== 'object' || !raw.data) return null;
+    // 저장된 값을 다시 검사해서, 앞에서부터 올바른 항목까지만 사용
+    const data = {};
+    for (const step of STEPS) {
+      if (!(step in raw.data)) break;
+      const res = QUESTIONS[step].parse(String(raw.data[step]));
+      if (res.error) break;
+      data[step] = res.value;
+    }
+    return Object.keys(data).length ? { data } : null;
+  } catch (e) {
+    return null;
+  }
+}
+/** 로그아웃 때 개인정보를 모두 지운다 (ROADMAP 3번: 개인정보 답은 sessionStorage 에만, 로그아웃 때 지운다) */
+function clearSessionData() {
+  clearDraft();
+  state.pending = null;
+}
+
+/* ============================================================
+   공통 도구
+   ============================================================ */
+
+function contactUrl() {
   const u = String(CFG.contactUrl || '').trim();
   return /^https:\/\//.test(u) ? u : '';
 }
-function contactBtn() {
-  let b = $('failContactBtn');
-  if (!b) {
-    b = document.createElement('button');
-    b.type = 'button';
-    b.id = 'failContactBtn';
-    b.className = 'btn-modal btn-modal-line font-display';
-    b.textContent = '카카오톡 문의';
-    b.hidden = true;
-    b.addEventListener('click', () => { const h = contactHref(); if (h) window.open(h, '_blank', 'noopener'); });
-    $('retryBtn').insertAdjacentElement('afterend', b);
-  }
-  return b;
-}
-
-function setSending(on) {
-  state.sending = on;
-  const btn = $('submitBtn');
-  btn.disabled = on;
-  btn.textContent = on ? 'SENDING...' : 'REQUEST';
-  btn.setAttribute('aria-busy', on ? 'true' : 'false');
-  if (!on) hideStatus();
-  ['name', 'phone', 'url', 'consent'].forEach((id) => { $(id).disabled = on; });
-}
-
-/* ---------------- 완료 / 복사 ---------------- */
 
 function formatWon(n) {
   return Number(n).toLocaleString('ko-KR') + '원';
 }
-
-function showComplete(id) {
-  $('receiptNo').textContent = id;
-  const pay = CFG.payment || {};
-  const link = String(pay.kakaopayLink || '').trim();
-  if (pay.price && /^https:\/\//.test(link)) {
-    $('payAmount').textContent = formatWon(pay.price);
-    $('payRef').textContent = id;
-    $('payLink').href = link;
-    const qr = $('payQr');
-    if (pay.kakaopayQr) { qr.src = pay.kakaopayQr; qr.hidden = false; $('payQr').nextElementSibling.hidden = false; }
-    else { qr.hidden = true; $('payQr').nextElementSibling.hidden = true; }
-    $('payBox').hidden = false;
-  } else {
-    $('payBox').hidden = true;
-  }
-  $('copyBtn').textContent = 'COPY';
-  $('copyMsg').textContent = '';
-  $('completeDialog').showModal();
-}
-
-$('copyBtn').addEventListener('click', async () => {
-  const id = $('receiptNo').textContent;
-  const ok = await copyText(id);
-  if (ok) {
-    $('copyBtn').textContent = 'COPIED';
-    $('copyMsg').textContent = `접수번호 ${id}를 복사했습니다.`;
-  } else {
-    $('copyMsg').textContent = '복사하지 못했습니다. 번호를 길게 눌러 복사해주세요.';
-  }
-});
-$('closeCompleteBtn').addEventListener('click', () => $('completeDialog').close());
 
 async function copyText(text) {
   try {
@@ -613,11 +1075,16 @@ async function copyText(text) {
   }
 }
 
-/* ---------------- 입력값 정리 ---------------- */
+/* ---------- 입력값 정리 (서버와 같은 규칙) ---------- */
 
 function cleanName(v) {
   const s = String(v || '').replace(/[\u0000-\u001f\u007f]/g, '').replace(/\s+/g, ' ').trim();
   return s.length >= 1 && s.length <= 40 ? s : '';
+}
+
+function cleanText(v, min, max) {
+  const s = String(v || '').replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim();
+  return s.length >= min && s.length <= max ? s : '';
 }
 
 function formatPhoneTyping(v) {
@@ -674,33 +1141,35 @@ function newClientRef() {
   return Array.from(b, (x) => x.toString(16).padStart(2, '0')).join('');
 }
 
-/* ---------------- 오류 표시 ---------------- */
-
-function showFieldError(field, msg) {
-  const err = $(field + 'Err');
-  err.textContent = msg;
-  err.hidden = false;
-  $(field).setAttribute('aria-invalid', 'true');
-}
-function clearFieldError(field) {
-  const err = $(field + 'Err');
-  err.textContent = '';
-  err.hidden = true;
-  $(field).removeAttribute('aria-invalid');
-}
-function clearAllErrors() { ['name', 'phone', 'url', 'consent'].forEach(clearFieldError); }
-function focusField(field) {
-  const el = $(field);
-  el.scrollIntoView({ block: 'center', behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
-  setTimeout(() => el.focus({ preventScroll: true }), 250);
-}
-
-/* ---------------- 안내 콘텐츠 ---------------- */
+/* ---------- 안내 콘텐츠 ---------- */
 
 function renderStaticInfo() {
-  // SIZE
   const st = CFG.sizeTable || { columns: [], rows: {} };
-  const table = $('sizeTable');
+  const missing = buildSizeTable($('sizeTable'), st);
+  buildSizeTable($('sizeTableDialog'), st);
+  const note = missing
+    ? '단위 cm · 상세 수치는 준비 중입니다.'
+    : (String(st.note || '').trim() || '단위 cm');
+  $('sizeNote').textContent = note;
+  $('sizeNoteDialog').textContent = note;
+
+  // SIZE 칩
+  SIZES.forEach((size) => $('sizeChips').appendChild(cell('span', size)));
+
+  // QUALITY / CARE / CUSTOM GUIDE / COPYRIGHT·NOTICE / TERMS
+  fillList('qualityList', CFG.quality);
+  fillList('careList', CFG.care);
+  fillList('guideList', CFG.guide);
+  fillList('noticeList', CFG.notice);
+  fillList('termsList', ['REQUEST는 제작 요청 접수이며, 확인 후 제작 가능 여부를 연락드립니다.'].concat(CFG.notice || []));
+
+  $('retentionText').textContent = String(CFG.privacyRetention || '').trim() || '[보유 기간 입력 필요]';
+
+  // CONTACT → 카카오톡 채널 채팅
+  if (contactUrl()) $('contactLink').href = contactUrl();
+}
+
+function buildSizeTable(table, st) {
   const thead = document.createElement('thead');
   const hr = document.createElement('tr');
   hr.appendChild(cell('th', 'SIZE'));
@@ -724,34 +1193,7 @@ function renderStaticInfo() {
     cap.textContent = st.title;
     table.prepend(cap);
   }
-  $('sizeNote').textContent = missing
-    ? '단위 cm · 상세 수치는 준비 중입니다.'
-    : (String(st.note || '').trim() || '단위 cm');
-
-  // SIZE 칩
-  Object.keys(st.rows || {}).forEach((size) => $('sizeChips').appendChild(cell('span', size)));
-
-  // QUALITY / CARE / CUSTOM GUIDE / COPYRIGHT·NOTICE / TERMS
-  fillList('qualityList', CFG.quality);
-  fillList('careList', CFG.care);
-  fillList('guideList', CFG.guide);
-  fillList('noticeList', CFG.notice);
-  fillList('termsList', ['REQUEST는 제작 요청 접수이며, 확인 후 제작 가능 여부를 연락드립니다.'].concat(CFG.notice || []));
-
-  // PRIVACY / CONTACT
-  $('retentionText').textContent = String(CFG.privacyRetention || '').trim() || '[보유 기간 입력 필요]';
-  // PRICE
-  const pay = CFG.payment || {};
-  if (pay.price) {
-    $('priceName').textContent = pay.productName || '';
-    $('priceAmount').textContent = formatWon(pay.price);
-    $('priceDesc').textContent = [pay.description, '접수 완료 후 카카오페이로 결제'].filter(Boolean).join(' · ');
-    $('priceBox').hidden = false;
-  }
-
-  // CONTACT → 카카오톡 채널 채팅
-  const contactUrl = String(CFG.contactUrl || '').trim();
-  if (/^https:\/\//.test(contactUrl)) $('contactLink').href = contactUrl;
+  return missing;
 }
 
 function fillList(id, items) {
@@ -761,9 +1203,16 @@ function fillList(id, items) {
   list.forEach((s) => ul.appendChild(cell('li', s)));
 }
 
-function cell(tag, text) { const el = document.createElement(tag); el.textContent = text; return el; }
+function cell(tag, text) { const n = document.createElement(tag); n.textContent = text; return n; }
 
-/* ---------------- 대화상자 ---------------- */
+function el(tag, className, text) {
+  const n = document.createElement(tag);
+  if (className) n.className = className;
+  if (text != null) n.textContent = text;
+  return n;
+}
+
+/* ---------- 대화상자 ---------- */
 
 function bindDialogs() {
   document.querySelectorAll('[data-open]').forEach((btn) => {
@@ -771,9 +1220,9 @@ function bindDialogs() {
   });
   document.querySelectorAll('dialog').forEach((dlg) => {
     dlg.querySelectorAll('[data-close]').forEach((b) => b.addEventListener('click', () => dlg.close()));
-    // 바깥 어두운 영역을 누르면 닫기 (완료 창은 실수로 닫히지 않게 제외)
+    // 바깥 어두운 영역을 누르면 닫기
     dlg.addEventListener('click', (e) => {
-      if (e.target !== dlg || dlg.id === 'completeDialog') return;
+      if (e.target !== dlg) return;
       const r = dlg.getBoundingClientRect();
       const inside = e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
       if (!inside) dlg.close();
@@ -781,11 +1230,8 @@ function bindDialogs() {
   });
 }
 
-/* ---------------- 기타 ---------------- */
+/* ---------- 기타 ---------- */
 
 function prefersReducedMotion() {
   return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-}
-function scrollToId(id) {
-  $(id).scrollIntoView({ behavior: prefersReducedMotion() ? 'auto' : 'smooth', block: 'start' });
 }

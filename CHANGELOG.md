@@ -4,6 +4,7 @@ AI 팀이 작업한 날마다 한 줄 이상 추가합니다. 위에 최신 기�
 형식: `- vX.Y (YYYY-MM-DD, 역할) — 무엇이 바뀌었나`
 LIVE 에 반영되면 의장 승인 워크플로가 `[LIVE]` 줄을 추가합니다.
 
+- v0.3 (2026-10-15, developer) — 채팅 골격 이식: `drafts/chat-v1` 의 대화형 주문 로직을 `app/` 으로 옮김. step(질문 순서)/answers(chat.data)/pending(재시도 대기) 상태 분리, 입력 영역 4종(text/chips/login/confirm), 질문 순서는 이미지 링크 → 한 줄 이야기(건너뛰기 가능) → 사이즈 → 로그인 → 이름 → 전화번호 → 주소 → 배송 요청 → 확인 → 접수. v0.2 안전장치(60초 기다림, 10초 느림 안내, 답 없으면 같은 clientRef 로 재확인, 접수번호는 서버 ok:true+OS-번호+v>=2 확인 후에만 표시, NOT_SAVED_CODES 구분)는 그대로 유지. 개인정보(이름·전화번호·주소 등)는 sessionStorage 에만 저장하고 로그아웃 시 삭제, localStorage 사용 없음. 한글 IME 조합 중 Enter 전송 방지, 인앱 브라우저(카카오톡·인스타그램) 안내는 첫 말풍선에 유지. 서버(Code.gs) 변경 없음 — v2 서버가 이미 사이즈·주소·story를 지원해 그대로 사용. LAB 에만 반영.
 - v0 (2026-10-15, developer) — 안전장치: AI 팀이 못 돈 날 생기는 임시(fallback) 포스트를 실제 계정에 자동 발행하지 않도록 publish_post.py·prepare_hero.py 수정
 
 ## 기록
