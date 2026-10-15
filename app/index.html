@@ -19,15 +19,19 @@
 <body>
 <div class="page">
 
-  <!-- 상단 바: 로고 + 로그인 상태 -->
-  <header class="topbar" id="top">
-    <span class="font-display topbar-brand">OWN STREET</span>
-    <span class="font-display topbar-tag" id="topTag">KR / CUSTOM TEE</span>
-    <div class="user-chip" id="userChip" hidden>
-      <span class="chip-avatar"><img id="avatarImg" alt="" referrerpolicy="no-referrer" hidden><span id="avatarInitial" class="font-display"></span></span>
-      <span class="chip-name" id="userName"></span>
-      <button type="button" class="font-display chip-logout" id="logoutBtn">LOGOUT</button>
+  <!-- 상단 바: 로고 + 로그인 상태 + 진행 표시(얇은 막대, 숫자 없음) -->
+  <header class="topbar-wrap" id="top">
+    <div class="topbar">
+      <span class="font-display topbar-brand">OWN STREET</span>
+      <span class="font-display topbar-tag" id="topTag">KR / CUSTOM TEE</span>
+      <div class="user-chip" id="userChip" hidden>
+        <span class="chip-avatar"><img id="avatarImg" alt="" referrerpolicy="no-referrer" hidden><span id="avatarInitial" class="font-display"></span></span>
+        <span class="chip-name" id="userName"></span>
+        <button type="button" class="font-display chip-logout" id="logoutBtn">LOGOUT</button>
+      </div>
     </div>
+    <!-- 숫자(3/8) 대신 막대 채움으로 "얼마나 왔는지"만 암시. 접수 전까지만 보인다 -->
+    <div class="topbar-progress" id="topProgress" role="progressbar" aria-label="주문 진행" aria-valuemin="0" aria-valuemax="100" style="--progress: 0" hidden></div>
   </header>
 
   <!-- 대화형 주문 -->

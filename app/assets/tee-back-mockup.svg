@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 260" role="img" aria-labelledby="teeBackTitle">
+  <title id="teeBackTitle">티셔츠 뒷면 목업 — 프린트 위치 안내</title>
+  <!-- 배경 -->
+  <rect x="0" y="0" width="240" height="260" fill="none"/>
+  <!-- 티셔츠 뒷면 본체 (반팔, neo-brutalist 2px 테두리) -->
+  <path d="M80 8
+           L95 2 L120 2 L145 2 L160 8
+           L160 26 L198 40 L198 92 L160 80
+           L160 248 L80 248
+           L80 80 L42 92 L42 40 L80 26
+           Z"
+        fill="#FCFAF6" stroke="#13161B" stroke-width="4" stroke-linejoin="round"/>
+  <!-- 목 라인 -->
+  <path d="M95 2 Q120 20 145 2" fill="none" stroke="#13161B" stroke-width="3"/>
+  <!-- 프린트 가능 영역(뒷면 단일 프린트, 점선으로 자리만 표시) -->
+  <rect x="95" y="60" width="50" height="66" fill="none" stroke="#F85003" stroke-width="2.5" stroke-dasharray="5 4"/>
+  <text x="120" y="98" text-anchor="middle" font-family="Pretendard, sans-serif" font-size="9" fill="#4F5661">PRINT</text>
+  <text x="120" y="110" text-anchor="middle" font-family="Pretendard, sans-serif" font-size="9" fill="#4F5661">AREA</text>
+</svg>

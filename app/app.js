@@ -25,8 +25,10 @@ const DRAFT_KEY = 'ownstreet.order.v1';
 // 질문 순서 (ROADMAP Stage 1): 이미지 링크 → 한 줄 이야기(건너뛰기 가능) → 사이즈 → 이름 → 전화번호 → 주소 → 배송 요청 → 확인 → 접수
 // 로그인은 이름 질문 앞(접수에 꼭 필요해지는 시점)에 따로 둔다 (10-11 회의 결정).
 const STEPS = ['url', 'story', 'size', 'name', 'phone', 'address', 'memo'];
-// 진행 단계 점("3/8") 표시는 넣지 않았다 — 건너뛰기·되돌리기가 있으면 숫자가 틀릴 위험이 있다고 판단했다
-// (10-11 회의 결정: 윤 개발자 판단에 맡김). 상단 바는 로고와 로그인 상태만 둔다.
+// 진행 "숫자"(3/8) 표시는 넣지 않았다 — 건너뛰기·되돌리기·수정이 있으면 숫자가 틀릴 위험이 있다고
+// 판단했다(10-11 회의 결정: 윤 개발자 판단에 맡김). 대신 상단 바 밑에 얇은 막대로 "얼마나 왔는지"만
+// 암시한다(setProgress/hideProgress, 10-16 디자이너 추가). 막대는 정확한 단계 수를 주장하지 않으므로
+// 건너뛰거나 되돌아가도 "틀린 숫자"가 보일 위험이 없다.
 
 // 서버가 이 코드를 돌려줬다면 아무것도 저장되지 않았다 (Code.gs 는 저장 전에 이 검사들을 끝낸다)
 const NOT_SAVED_CODES = ['NO_ENDPOINT', 'NOT_READY', 'TOKEN_ERROR', 'BAD_REQUEST', 'VERSION_MISMATCH', 'NOT_CONFIGURED',
@@ -202,6 +204,19 @@ function renderUser() {
   }
 }
 
+/** 진행 막대: idx(0 ~ STEPS.length) 를 받아 채움 비율만 넓게 보여준다.
+ *  숫자(예: "3/8")는 쓰지 않는다 — 건너뛰기·되돌리기·수정이 있으면 숫자가 틀릴 수 있어서다. */
+function setProgress(idx) {
+  const bar = $('topProgress');
+  const ratio = Math.max(0.04, Math.min(1, idx / STEPS.length)); // 시작부터 살짝 채워 "시작했다"는 것만 보여줌
+  bar.style.setProperty('--progress', ratio);
+  bar.setAttribute('aria-valuenow', Math.round(ratio * 100));
+  bar.hidden = false;
+}
+function hideProgress() {
+  $('topProgress').hidden = true;
+}
+
 /* 카카오톡·인스타그램 등 앱 안 브라우저: Google이 로그인을 막으므로 바깥 브라우저로 안내 */
 function isInAppBrowser() {
   const ua = navigator.userAgent || '';
@@ -364,6 +379,7 @@ function resume(draft) {
 
 async function askStep(step, instant) {
   chat.step = step;
+  setProgress(STEPS.indexOf(step));
   const q = QUESTIONS[step];
   if (instant) botNow(q.ask); else await botSay(q.ask);
   if (chat.step !== step) return;
@@ -413,6 +429,7 @@ async function answer(step, raw) {
 /** 이름 질문 앞에서 Google 로그인 (접수에 꼭 필요해지는 시점에 둔다) */
 async function askLogin() {
   chat.step = 'login';
+  setProgress(STEPS.indexOf('name'));
   await botSay('이제부터는 이름·연락처·주소를 여쭤봅니다.\n접수 확인을 위해 Google 로그인이 필요합니다.');
   if (chat.step !== 'login') return;
   showLoginChoice(() => askStep('name'));
@@ -447,6 +464,7 @@ function displayValue(step, value) {
 
 async function showConfirm(instant) {
   chat.step = 'confirm';
+  setProgress(STEPS.length - 0.5); // 마지막 질문 뒤, 접수 전 — 거의 다 왔다는 정도만 보여준다
   retireCards();
   if (instant) botNow('주문 내용을 확인해주세요.'); else await botSay('주문 내용을 확인해주세요.');
 
@@ -455,7 +473,7 @@ async function showConfirm(instant) {
   const dl = el('dl', 'order-list');
   STEPS.forEach((step) => {
     const row = el('div', 'order-row');
-    row.append(el('dt', 'font-display', QUESTIONS[step].label));
+    row.append(el('dt', 'order-label-ko', QUESTIONS[step].label));
     const dd = el('dd', step === 'url' ? 'order-val is-url' : 'order-val', displayValue(step, chat.data[step]));
     const edit = el('button', 'link order-edit', '수정');
     edit.type = 'button';
@@ -792,9 +810,31 @@ function unknownChoices() {
   return choices;
 }
 
+/* ---------- 티셔츠 뒷면 목업 ----------
+   손님이 보내는 것은 "이미지가 있는 채팅 링크"라 실제 이미지 파일 주소가 아니다. 그래서 여기서
+   손님 이미지를 직접 끌어와 보여주지 않는다(신뢰할 수 없는 외부 주소를 그대로 <img> 에 걸지 않는다).
+   대신 뒷면 어디에, 어떤 크기로 프린트되는지 자리만 짚어주는 정적 SVG 목업을 둔다. */
+function buildMockupCard(size) {
+  const wrap = el('div', 'card mockup-card');
+  const kicker = el('div', 'modal-kicker');
+  kicker.append(el('span', 'dot'), el('span', 'font-display', 'BACK PRINT'));
+  wrap.append(kicker);
+  const img = document.createElement('img');
+  img.className = 'mockup-img';
+  img.src = './assets/tee-back-mockup.svg';
+  img.alt = '티셔츠 뒷면 목업 — 점선 안쪽이 실제 프린트 위치(뒷면 단일, 최대 A3)';
+  img.width = 120; img.height = 130;
+  wrap.append(img);
+  const note = el('p', 'mockup-note',
+    (size ? size + ' 사이즈 · ' : '') + '뒷면 단일 프린트 · 최대 A3 사이즈');
+  wrap.append(note);
+  return wrap;
+}
+
 /* ---------- 접수 완료 + 결제 안내 ---------- */
 
 function showComplete(id, extraNote) {
+  hideProgress(); // 접수 완료 — 더는 "진행 중"이 아니므로 막대를 치운다
   const done = el('div', 'card done-card');
   const kicker = el('div', 'modal-kicker');
   kicker.append(el('span', 'dot'), el('span', 'font-display', 'REQUEST COMPLETE'));
@@ -804,6 +844,8 @@ function showComplete(id, extraNote) {
     el('p', 'done-text', '확인 후 연락드리겠습니다.'));
   if (chat.data.story) done.append(el('p', 'done-story', '"' + chat.data.story + '"'));
   appendMsg('bot', done, 'wide');
+
+  appendMsg('bot', buildMockupCard(chat.data.size), 'wide');
 
   const link = String(PAY.kakaopayLink || '').trim();
   if (PAY.price && /^https:\/\//.test(link)) {
@@ -864,6 +906,7 @@ function resetChat(autoStart) {
   clearDraft();
   $('chatLog').textContent = '';
   $('chatReset').hidden = true;
+  hideProgress();
   greet();
   if (autoStart) { chat.active = true; beginOrder(); }
   else setChoices([{ label: '주문 시작', primary: true, id: 'chatStart', onPick: () => beginOrder() }]);
