@@ -1,0 +1,6 @@
+=== version ===
+2.1.197 (Claude Code)
+
+=== print mode call ===
+OK
+call rc=0
