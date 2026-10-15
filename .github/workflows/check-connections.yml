@@ -40,14 +40,11 @@ jobs:
         id: claude
         if: steps.has_claude.outputs.yes == 'true'
         continue-on-error: true
-        uses: anthropics/claude-code-action@v1
-        with:
-          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          prompt: "연결 점검입니다. 다른 일은 하지 말고 OK 라고만 답하세요."
-          claude_args: |
-            --model sonnet
-            --max-turns 1
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+        run: |
+          npm install -g @anthropic-ai/claude-code
+          claude -p "Reply with just: OK" --model sonnet
 
       - uses: actions/setup-python@v5
         with:
