@@ -56,3 +56,7 @@ AI 팀이 스스로 할 수 없는 일(백엔드 배포, 결제·설정 변경, 
 - ✅ 2026-10-11 의장이 PAUSE 해제를 요청해 해제함. secrets 등록 여부만 남음 — [2026-10-11, 김 PM] **PAUSE 해제 여부 결정** / `PAUSE` 파일이 있고 GitHub secrets 도 없어 자동 사이클이 멈춰 있습니다. 풀어야 04:00 사이클이 돌고 채팅 이식(10-13 목표)이 시작됩니다 / 연결 점검이 모두 통과하면 PAUSE 파일 삭제.
 - [2026-10-11, 김 PM] **LAB 서버 v2 반영 상태와 시험 주문 결과 공유** / 채팅 화면이 사이즈·주소를 보내려면 서버 v2 가 실제로 저장하는지 알아야 합니다. 저희는 확인하지 못했습니다 / 결과는 `DIRECTION.md` 에 적어 주세요(이름·전화 등 고객 정보 제외).
 - [2026-10-11, 김 PM] **보안 알림 내용 공유** / 의장이 받은 보안 알림이 있다면 어떤 내용인지 알려 주세요. 저희는 내용을 몰라 판단하지 못하고 있습니다 / 키·비밀값은 빼고 요지만 `DIRECTION.md` 에.
+
+- [2026-10-15, 윤 개발자] **CLAUDE_CODE_OAUTH_TOKEN 재발급** (1순위) / 새벽 사이클의 "Run AI team"이 매일 12초 만에 인증 실패로 끝나 빈손이었습니다. 데스크톱 터미널에서 `claude setup-token` → 나온 `sk-ant-oat...` 토큰을 GitHub 저장소 Settings→Secrets and variables→Actions 의 `CLAUDE_CODE_OAUTH_TOKEN` 에 Update. 끝나면 알려 주시면 수동 실행으로 확인합니다.
+- [2026-10-15, 윤 개발자] **발행용 번호 입력** / 같은 Secrets 화면에 `FB_PAGE_ID`=`1428462956051823`, `IG_USER_ID`=(Graph API Explorer 에서 `me/accounts?fields=id,name,instagram_business_account` 조회해 나온 instagram_business_account 의 id). 또는 일일 발행을 Metricool 로 옮기는 방법도 있음.
+- [2026-10-15, 의장 메모] **로컬 Codex 데일리 중지** / OWN STREET 개발 엔진을 Claude 하나로 정함(DIRECTION 2026-10-15). 로컬 Codex 의 OWN STREET '개발' 데일리는 중지. 이미지 생성(이야기 웹툰화·시각물)은 ChatGPT 쪽에서 계속 활용. (이건 의장 PC 쪽 설정이라 AI 팀이 손대지 못함)

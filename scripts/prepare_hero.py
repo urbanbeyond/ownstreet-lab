@@ -98,11 +98,11 @@ def ensure_post(d: Path) -> dict:
             "#OWNSTREET #buildinpublic #AI팀"
         ),
         "image_source": "",
-        "safety_check": "passed",
+        "safety_check": "fallback",
         "auto_fallback": True,
     }
     write_json(p, post)
-    print("post.json 없음 → 중단 공개용 최소 포스트 생성")
+    print("post.json 없음 → 임시 포스트 생성(safety_check=fallback: 자동 발행하지 않음)")
     return post
 
 

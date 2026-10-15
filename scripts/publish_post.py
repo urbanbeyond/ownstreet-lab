@@ -47,6 +47,9 @@ def main() -> int:
         return 0
 
     post = read_json(post_path)
+    if post.get("auto_fallback"):
+        print("임시(fallback) 포스트 — 실제 계정에 자동 발행하지 않음. 의장이 직접 올릴 내용만 발행한다.")
+        return 0
     if post.get("safety_check") != "passed":
         print("안전 체크 미통과 — 발행하지 않음")
         return 0
