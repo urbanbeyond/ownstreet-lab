@@ -246,7 +246,7 @@ function openExternalBrowser() {
 const QUESTIONS = {
   url: {
     label: '이미지 링크',
-    ask: 'OWN STREET입니다.\n생성한 이미지가 있는 채팅 링크를 보내주세요.\n공개 링크만 받습니다.',
+    ask: 'OWN STREET입니다.\n만들어 둔 이미지가 있는 채팅 링크를 보내주세요.\n공개 링크만 받을 수 있어요.',
     input: { type: 'text', inputmode: 'url', placeholder: 'https://...', maxlength: 2000, autocomplete: 'off', autocapitalize: 'off' },
     parse(raw) {
       const v = normalizeUrl(raw);
@@ -255,7 +255,7 @@ const QUESTIONS = {
   },
   story: {
     label: '한 줄 이야기',
-    ask: '이 이미지에 담은 생각이나 이야기를 한 줄로 알려주세요.\n건너뛰어도 됩니다.',
+    ask: '이 이미지, 어떤 마음으로 만들었어요?\n한 줄로 적어주면 접수번호 받을 때 같이 보여드릴게요.\n건너뛰어도 괜찮아요.',
     input: { type: 'text', placeholder: '예) 처음으로 내가 정한 나의 색', maxlength: 200, autocomplete: 'off' },
     skip: '건너뛰기',
     parse(raw) {
@@ -842,7 +842,10 @@ function showComplete(id, extraNote) {
   no.id = 'receiptNo';
   done.append(kicker, el('p', 'done-title', '접수됐습니다.'), el('p', 'modal-sub', '접수번호'), no,
     el('p', 'done-text', '확인 후 연락드리겠습니다.'));
-  if (chat.data.story) done.append(el('p', 'done-story', '"' + chat.data.story + '"'));
+  if (chat.data.story) {
+    done.append(el('p', 'done-story-label', '당신의 스트릿'));
+    done.append(el('p', 'done-story', '"' + chat.data.story + '"'));
+  }
   appendMsg('bot', done, 'wide');
 
   appendMsg('bot', buildMockupCard(chat.data.size), 'wide');
