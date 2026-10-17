@@ -368,7 +368,7 @@ details[open] .acc-sign { transform: rotate(45deg); }
 .done-title { margin-top: 12px; font-size: 22px; line-height: 1.3; font-weight: 700; }
 .done-card .modal-sub { margin-top: 12px; }
 .done-text { margin-top: 10px; font-size: 15px; }
-.done-story-label { margin-top: 14px; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+.done-story-label { margin-top: 14px; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted-foreground); }
 .done-story { margin-top: 2px; font-size: 14px; font-style: italic; color: var(--muted-foreground); overflow-wrap: anywhere; }
 .pay-card { display: grid; gap: 10px; justify-items: center; text-align: center; }
 .pay-card .pay-head { width: 100%; }
