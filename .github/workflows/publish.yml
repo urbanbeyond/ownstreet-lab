@@ -1,10 +1,9 @@
 name: Morning Publish
 
-# 매일 아침 7시(한국 시간)에 새벽에 준비된 포스트를 인스타그램·페이스북에 올린다.
-# AI 를 쓰지 않으므로 Claude 사용량을 소모하지 않는다.
+# 발행 경로를 Metricool 로 옮김(2026-10-18). 이 Meta 직접 발행은 자동 실행하지 않는다.
+# 매일 발행은 Claude 쪽 예약 작업이 Metricool 로 처리한다(열쇠 추가 불필요).
+# 수동으로 돌려보고 싶을 때만 Actions 에서 실행(META 비밀값이 있어야 동작).
 on:
-  schedule:
-    - cron: "0 22 * * *"   # UTC 22:00 = KST 07:00
   workflow_dispatch: {}
 
 permissions:
