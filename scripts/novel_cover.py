@@ -26,7 +26,7 @@ def main() -> int:
     img = Image.new("RGB", (W, H), h.PAPER)
     d = ImageDraw.Draw(img)
     d.text((64, 52), "OWN STREET", font=h.anton(64), fill=h.INK)
-    label = f"EP {ep[2:]}"
+    label = f"EX {ep[2:]}" if ep.startswith("EX") else f"EP {ep[2:]}"
     f = h.anton(52)
     tw = d.textlength(label, font=f)
     x1 = W - 64
