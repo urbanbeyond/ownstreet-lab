@@ -309,7 +309,13 @@ details[open] .acc-sign { transform: rotate(45deg); }
 .chat { max-width: 560px; margin: 0 auto; }
 .chat-log { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
 
-.msg { display: flex; flex-direction: column; align-items: flex-start; }
+.msg {
+  display: flex; flex-direction: column; align-items: flex-start;
+  /* #chatInput 은 position: sticky 로 화면 아래에 떠 있어 실제 높이만큼 말풍선을 가린다.
+     scrollIntoView(block:'end') 가 입력창 뒤까지 스크롤하도록 여유 공간을 둔다
+     (사이즈 칩 2줄 + 건너뛰기 버튼처럼 입력 영역이 가장 커지는 경우를 기준으로 넉넉히 잡음). */
+  scroll-margin-bottom: 140px;
+}
 .msg.me { align-items: flex-end; }
 .msg.bot + .msg.me, .msg.me + .msg.bot { margin-top: 6px; }
 .msg-who {

@@ -946,7 +946,12 @@ function meSay(text) { return appendMsg('me', text); }
 function keepInView() {
   if (!chat.active) return;
   requestAnimationFrame(() => {
-    $('chatInput').scrollIntoView({ block: 'nearest', behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
+    // #chatInput 은 position: sticky 라서 뷰포트 안에 "항상 보이는" 요소로 취급되어
+    // scrollIntoView 를 걸어도 브라우저가 스크롤을 생략해버린다(실기기 확인 결과 재현됨).
+    // 대신 채팅 로그의 가장 최근 말풍선을 타겟으로 스크롤해서 새 메시지가 입력창과
+    // 겹치지 않고 눈에 보이게 한다.
+    const last = $('chatLog').lastElementChild;
+    if (last) last.scrollIntoView({ block: 'end', behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
   });
 }
 
