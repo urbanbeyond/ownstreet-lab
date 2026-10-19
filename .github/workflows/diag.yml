@@ -1,0 +1,38 @@
+name: Claude Diag
+# 임시 점검: 매일 사이클과 똑같은 방식으로 AI 를 불러 실제 오류를 파일로 남긴다(토큰은 가림).
+on:
+  workflow_dispatch: {}
+permissions:
+  contents: write
+jobs:
+  diag:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install Claude CLI
+        run: npm install -g @anthropic-ai/claude-code
+      - name: Test same as daily cycle
+        continue-on-error: true
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+        run: |
+          mkdir -p checks
+          {
+            echo "=== version ==="; claude --version 2>&1
+            echo; echo "=== stdin + same flags as daily cycle ==="
+            echo "Reply with just: OK" | claude -p --model sonnet --dangerously-skip-permissions 2>&1
+            echo "rc=$?"
+          } > checks/claude-diag.txt 2>&1 || true
+          sed -i -E 's/sk-ant-[A-Za-z0-9_-]+/sk-ant-REDACTED/g' checks/claude-diag.txt
+          cat checks/claude-diag.txt
+      - name: Commit
+        run: |
+          git config user.name "ownstreet-ai-team"
+          git config user.email "ai-team@users.noreply.github.com"
+          git add checks/claude-diag.txt
+          git commit -m "diag: claude 호출 점검" || true
+          git push
