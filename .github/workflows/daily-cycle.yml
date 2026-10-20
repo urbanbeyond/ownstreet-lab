@@ -1,11 +1,14 @@
 name: Daily Lab Cycle
 
-# 매일 새벽 4시(한국 시간): AI 팀이 하루치 작업을 하고, LAB 사이트에 배포하고, 포스트를 준비한다.
-# 발행은 publish.yml 이 아침 7시에 한다. LIVE 반영은 promote-live.yml (의장 버튼).
+# 매일 새벽(한국 시간): AI 팀이 하루치 작업을 하고, LAB 사이트에 배포하고, 포스트를 준비한다.
+# 시작: Claude 예약 작업이 03:52 KST 에 이 워크플로를 정시에 실행한다(workflow_dispatch).
+#       GitHub 자체 예약(schedule)은 2~4시간씩 늦게 시작해서(06:20~10:11 기록) 예비용으로만 둔다.
+# 발행: Claude 예약 작업이 07:40 에 확인해 08:00 에 Metricool 로 예약 발행 (못 했으면 12:40 에 한 번 더).
+# LIVE 반영은 promote-live.yml (의장 버튼).
 on:
   schedule:
-    - cron: "0 19 * * *"   # UTC 19:00 = KST 04:00
-  workflow_dispatch: {}     # Actions 탭에서 수동 실행
+    - cron: "0 20 * * *"   # 예비: UTC 20:00 = KST 05:00 (실제 시작은 보통 더 늦음). 오늘 진짜 포스트가 이미 있으면 건너뜀
+  workflow_dispatch: {}     # 정시 시작(Claude 예약 작업) + Actions 탭에서 수동 실행
 
 permissions:
   contents: write
@@ -28,7 +31,13 @@ jobs:
       - name: Check PAUSE switch
         id: pause
         run: |
-          if [ -f PAUSE ]; then echo "paused=true" >> "$GITHUB_OUTPUT"; echo "PAUSE — 오늘은 쉼"; else echo "paused=false" >> "$GITHUB_OUTPUT"; fi
+          if [ -f PAUSE ]; then echo "paused=true" >> "$GITHUB_OUTPUT"; echo "PAUSE — 오늘은 쉼"; exit 0; fi
+          # 예비 예약(schedule)은 새벽 정시 실행이 이미 진짜 포스트를 만들었으면 건너뛴다 (임시 포스트뿐이면 다시 시도)
+          P="daily/$(date +%F)/post.json"
+          if [ "${{ github.event_name }}" = "schedule" ] && [ -f "$P" ] && ! grep -q '"auto_fallback": *true' "$P"; then
+            echo "paused=true" >> "$GITHUB_OUTPUT"; echo "오늘 작업은 이미 끝남 — 예비 실행 건너뜀"; exit 0
+          fi
+          echo "paused=false" >> "$GITHUB_OUTPUT"
 
       - name: Set up Python
         if: steps.pause.outputs.paused == 'false'
