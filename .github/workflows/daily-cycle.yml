@@ -80,14 +80,47 @@ jobs:
 
       # claude-code-action@v1 이 exit code 2 로 실패해 CLI 직접 호출로 바꿈
       # (diag 로 CLI+토큰 정상 확인됨). Meta·Netlify 토큰·LAB 주소는 이 단계에 넘기지 않는다.
+      # 예비 모델: 1차 sonnet(혼잡·사용 불가 시 haiku 로 자동 전환) → 빨리 실패하면 2분 뒤 haiku 로 한 번 더.
+      # 단, 구독 사용 한도(5시간·주간)는 모든 모델이 함께 쓰므로 한도가 '다 찬' 경우엔 haiku 도 막힌다.
+      # 결과(모델·종료 코드·오류 끝부분)는 daily/날짜/ai_run.md 에 남겨 다음 날 원인을 바로 볼 수 있게 한다.
       - name: Run AI team
         if: steps.pause.outputs.paused == 'false'
         continue-on-error: true
         env:
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          D: ${{ steps.today.outputs.date }}
         run: |
           npm install -g @anthropic-ai/claude-code
-          cat "$RUNNER_TEMP/prompt.txt" | claude -p --model sonnet --dangerously-skip-permissions
+          LOG="daily/$D/ai_run.md"
+          echo "# AI 팀 실행 기록 ($D)" > "$LOG"
+          run_team() {
+            local model="$1" extra="$2" start rc
+            start=$(date +%s)
+            set +e
+            cat "$RUNNER_TEMP/prompt.txt" | claude -p --model "$model" $extra --dangerously-skip-permissions 2> "$RUNNER_TEMP/err.txt"
+            rc=$?
+            set -e
+            local mins=$(( ($(date +%s) - start) / 60 ))
+            {
+              echo
+              echo "- $(date '+%H:%M') 모델: $model ${extra:+($extra)} / 종료 코드: $rc / ${mins}분"
+              if [ "$rc" != "0" ]; then
+                echo '```'
+                tail -n 30 "$RUNNER_TEMP/err.txt" | sed -E 's/(sk-ant-|nfp_)[A-Za-z0-9_-]+/\1REDACTED/g'
+                echo '```'
+              fi
+            } >> "$LOG"
+            LAST_MINS=$mins
+            return $rc
+          }
+          if run_team sonnet "--fallback-model haiku"; then exit 0; fi
+          if [ "$LAST_MINS" -lt 20 ]; then
+            echo "1차 실패 — 2분 뒤 예비 모델(haiku)로 다시 시도"
+            sleep 120
+            run_team haiku "" && { echo "- 예비 모델로 완료" >> "$LOG"; exit 0; }
+          fi
+          echo "- AI 팀 실행 실패 (임시 포스트로 대체됨)" >> "$LOG"
+          exit 1
 
       - name: Check app health (for tomorrow's PM)
         if: steps.pause.outputs.paused == 'false'
