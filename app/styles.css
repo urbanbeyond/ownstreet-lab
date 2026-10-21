@@ -360,7 +360,10 @@ details[open] .acc-sign { transform: rotate(45deg); }
 }
 .order-val { margin: 0; font-size: 15px; line-height: 1.5; font-weight: 600; overflow-wrap: anywhere; }
 .order-val.is-url { font-weight: 400; font-size: 14px; }
-.order-edit { margin: 0; min-height: 28px; font-size: 14px; }
+/* 글자 크기(14px)·밑줄 모양은 그대로 두고, 상하 패딩만 늘려 탭 영역을 48px 쪽에 가깝게 넓힌다
+   (COMPONENTS.md "링크형 버튼도 상하 여백으로 탭 영역을 넓힌다" 규칙, 10-22 developer).
+   오른쪽 padding 은 좁게 둬서 .order-row 의 76px/1fr/auto 3열 폭 배분을 바꾸지 않는다. */
+.order-edit { margin: 0; padding: 10px 2px; min-height: 48px; font-size: 14px; display: inline-flex; align-items: center; }
 .order-total { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-top: 14px; }
 .order-total-name { font-size: 14px; font-weight: 600; }
 .order-total-price { font-size: 26px; line-height: 32px; letter-spacing: 0.02em; color: var(--accent); white-space: nowrap; }
