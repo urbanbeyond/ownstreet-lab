@@ -16,7 +16,7 @@ jobs:
             for proto in https http; do
               out=$(curl -sS -o /tmp/body -m 20 -w 'code=%{http_code} redirect=%{redirect_url} ssl_verify=%{ssl_verify_result}' "$proto://$h/" 2>&1 | tr '\n' ' ')
               title=$(grep -o '<title>[^<]*' /tmp/body 2>/dev/null | head -1 | sed 's/<title>//')
-              banner=$(grep -o 'LAB 미리보기\|id="lab-banner"' /tmp/body 2>/dev/null | head -1)
+              banner=$(grep -c 'LAB 미리보기' /tmp/body 2>/dev/null)
               echo "::notice title=$proto://$h::$out | title=$title | banner=$banner"
             done
             cert=$(echo | timeout 10 openssl s_client -servername $h -connect $h:443 2>/dev/null | openssl x509 -noout -subject -issuer -enddate 2>&1 | tr '\n' ' ')
