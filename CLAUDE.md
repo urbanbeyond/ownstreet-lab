@@ -79,8 +79,8 @@ OWN STREET 는 **의장 1명과 AI 팀원 5명**으로 이루어진 스타트업
 그리고 아무도 시키지 않았지만, 회사에서 일어난 일을 바탕으로 **혼자만의 웹소설**을 쓴다. (`novel/`)
 
 ## 하루와 한 주 (한국 시간)
-- 매일 04:00 — 개발 사이클. 댓글 수집 → PM → 오늘의 역할 한 명 → 마케터(포스트·분위기 메모·웹소설 한 편) → LAB 배포 → 스크린샷 → 커밋
-- 매일 07:00 — 인스타그램·페이스북 발행 (사람 검수 없음)
+- 매일 03:52 — 개발 사이클. 댓글 수집 → PM → 오늘의 역할 한 명 → 마케터(개발 기록 포스트·분위기 메모·웹소설 한 편과 그 SNS 판) → LAB 배포 → 스크린샷 → 소설 발행 준비 → 커밋
+- 매일 08:00 — **디플로이 픽션 그날 회차**를 인스타그램(SNS 판)·페이스북(전문)에 발행 (사람 검수 없음). 개발 기록 포스트(`post.json`)는 공개하지 않고 저장만 한다 (의장 결정, 2026-10-23)
 - **월요일(과 맨 첫날)은 팀 회의의 날.** 코드를 고치지 않는다. 세 명의 팀원(진 디자이너 → 윤 개발자 → 신 브랜더)이 차례로 의견을 내고, 김 PM 이 결정하고, 마케터가 회의록을 쓴다.
 - 평일 작업을 마친 팀원은 work_summary 끝에 **"팀원에게 한마디"**를 남긴다. 마케터는 그날의 분위기를 읽고 **"분위기 메모"**를 남긴다. 다음 날 PM 이 둘 다 읽는다. 팀원 사이의 대화가 곧 이야기다.
 
@@ -93,10 +93,10 @@ OWN STREET 는 **의장 1명과 AI 팀원 5명**으로 이루어진 스타트업
 ## 폴더 규칙
 - `app/` — 서비스 프론트엔드 (LAB 으로 자동 배포, LIVE 는 의장 승인)
 - `backend/` — Apps Script 코드 (배포는 의장)
-- `daily/YYYY-MM-DD/` — `pm_decision.md`, `work_summary.md`, `team_note.md`(마케터의 분위기 메모), `post.json`, `hero.jpg`, `screen.png`, `published.json`
+- `daily/YYYY-MM-DD/` — `pm_decision.md`, `work_summary.md`, `team_note.md`(마케터의 분위기 메모), `post.json`(개발 기록, 저장용), `hero.jpg`, `screen.png`, `publish.json`(그날 발행할 소설 묶음), `published.json`
 - `meetings/YYYY-MM-DD/` — 월요일 회의: 팀원별 의견 파일, `minutes.md`(마케터가 쓰는 회의록)
 - `records/YYYY-MM-DD/` — 저장소 밖 기록의 요약 (`notes.md`). 없을 수 있다
-- `novel/` — 배 마케터의 웹소설: `BIBLE.md`(설정), `STORY_SO_FAR.md`(지금까지 줄거리), `episodes/EP001.md…`
+- `novel/` — 배 마케터의 웹소설: `BIBLE.md`(설정), `STORY_SO_FAR.md`(지금까지 줄거리), `episodes/EP001.md…`, `social/EP###.json`(SNS 판), `covers/EP###.jpg`(표지)
 - `ROADMAP.md` — 플랫폼까지의 길. 월요일 회의에서 PM 이 갱신
 - `CHANGELOG.md` — 버전 기록. 작업한 날마다 한 줄 이상 추가 (예: v0.3 — 주문 완료 화면에 제작 일정 안내 추가)
 - `OPERATOR_TODO.md` — 사람이 해야 할 일 요청

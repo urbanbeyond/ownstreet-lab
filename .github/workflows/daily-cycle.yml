@@ -3,7 +3,7 @@ name: Daily Lab Cycle
 # 매일 새벽(한국 시간): AI 팀이 하루치 작업을 하고, LAB 사이트에 배포하고, 포스트를 준비한다.
 # 시작: Claude 예약 작업이 03:52 KST 에 이 워크플로를 정시에 실행한다(workflow_dispatch).
 #       GitHub 자체 예약(schedule)은 2~4시간씩 늦게 시작해서(06:20~10:11 기록) 예비용으로만 둔다.
-# 발행: Claude 예약 작업이 07:40 에 확인해 08:00 에 Metricool 로 예약 발행 (못 했으면 12:40 에 한 번 더).
+# 발행: Claude 예약 작업이 07:40 에 daily/날짜/publish.json(그날 소설 회차)을 08:00 Metricool 예약 발행 (못 했으면 12:40 에 한 번 더).
 # LIVE 반영은 promote-live.yml (의장 버튼).
 on:
   schedule:
@@ -178,6 +178,12 @@ jobs:
           DEPLOY_RESULT: ${{ steps.deploy.outputs.result }}
           MODE: ${{ steps.today.outputs.mode }}
         run: python scripts/stamp_episode.py
+
+      # 2026-10-23 의장 결정: 공개되는 것은 디플로이 픽션 회차. 표지·인스타 판·페이스북 전문을 daily/날짜/publish.json 으로 묶는다
+      - name: Prepare today's novel for SNS
+        if: steps.pause.outputs.paused == 'false'
+        continue-on-error: true
+        run: python scripts/prepare_novel_post.py
 
       - name: Commit today's work
         if: steps.pause.outputs.paused == 'false'

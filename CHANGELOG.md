@@ -4,6 +4,8 @@ AI 팀이 작업한 날마다 한 줄 이상 추가합니다. 위에 최신 기�
 형식: `- vX.Y (YYYY-MM-DD, 역할) — 무엇이 바뀌었나`
 LIVE 에 반영되면 의장 승인 워크플로가 `[LIVE]` 줄을 추가합니다.
 
+- (2026-10-23 새벽, 운영) — 공개 대상 변경(의장 결정): 소비자에게 보이는 것은 디플로이 픽션 소설, 개발 포스트(post.json)는 저장만. 매일 08:00 발행이 그날 회차를 인스타그램(SNS 판)·페이스북(전문)으로 올리도록 바꿈. `scripts/prepare_novel_post.py` 추가(회차 → 표지·인스타 판·페이스북 전문 → daily/날짜/publish.json), 마케터에게 `novel/social/EP###.json`(인스타 판 본문·표지 문구) 쓰기 추가. 오늘 EP011 부터 적용.
+
 - v0.9 (2026-10-23, developer) — "이어하기"(답변 중간에 탭을 닫았다가 같은 세션에서 다시 열면 이어서 진행하는 기능)가 전혀 동작하지 않던 버그 수정: `app/app.js` 맨 위(17행대)에서 즉시 호출되던 `init()`이 `init() → initChat() → loadDraft()` 경로를 타며 아직 선언되지 않은(TDZ) `const QUESTIONS`(246행)를 참조해 `Cannot access 'QUESTIONS' before initialization` 예외가 났고, `loadDraft()`의 `try/catch`가 이를 조용히 삼켜 매번 `null`을 반환했다(10-22 developer 발견, 10-23 PM 결정으로 채택). `init()` 호출 위치만 파일 맨 끝(모든 top-level `const` 선언 이후)으로 옮겨 고침. Node 스크립트로 TDZ 에러를 먼저 재현한 뒤, Playwright로 sessionStorage에 가짜 draft(서버·실제 로그인 호출 없음)를 넣고 수정 전/후 콘솔 에러와 "이어서 진행합니다" 메시지 노출 여부를 비교 확인(수정 전: TDZ ReferenceError 발생, 이어하기 메시지 없음 / 수정 후: 에러 없음, 저장된 답변이 복원되고 이어하기 메시지 정상 노출, 로그인이 필요한 단계까지도 정상 복원). 서버(Code.gs)·config.js 변경 없음. LAB 에만 반영.
 - (2026-10-23, 운영) — LAB 미리보기 모드: LAB 전용 접수 서버 주소가 없어 LAB 빌드가 매번 건너뛰어져 최근 ownstreet-lab.netlify.app 이 새벽 사이클로 갱신되지 않던 것을 확인(의장 확인: 처음 이틀은 자동으로 반영됐고, 그 뒤 여러 번 의장의 손을 거쳐 고쳐 왔으며, 이번이 세 번째 반영)(빌드 단계가 "성공"으로 보였던 건 continue-on-error 때문). 주소가 없으면 접수 서버 주소를 비운 미리보기로 빌드·배포하도록 build_lab.py 수정, app.js 는 미리보기 빌드에서만 로그인 단계에서 "LAB 미리보기는 여기까지"로 멈추고 실제 서비스로 안내(LIVE 동작 변화 없음). 이제 LAB 스크린샷 단계도 돈다. 마케터 캡션 끝에 LAB 주소 한 줄을 매일 넣도록 규칙 변경.
 
