@@ -51,6 +51,7 @@ daily/<오늘>/publish.json 을 읽는다.
 - publish.json 의 episode 값(예: EP012)을 EP 로 둔다.
 - novel/webtoon/<EP>/ 안에 이미 01.png 또는 01.jpg 가 있으면 끝낸다 (이미 그린 날).
 - novel/webtoon/<EP>/brief.md (콘티)를 읽는다. 없으면 끝낸다.
+- 그림의 결을 맞추기 위해 함께 읽는다: 오늘 회차 전문 novel/episodes/<EP>.md (장면의 앞뒤와 감정), 소설 설정 novel/BIBLE.md (세계와 지키는 선). 콘티와 회차가 다르게 읽히면 콘티를 따른다.
 - 콘티의 컷 수만큼 이미지를 만든다. 규격과 그림 규칙은 아래 [그림 규칙]을 따른다.
 - 저장: novel/webtoon/<EP>/01.png, 02.png … (컷 순서대로)
 - 그리고 novel/webtoon/<EP>/done.json 을 만든다:
@@ -58,8 +59,15 @@ daily/<오늘>/publish.json 을 읽는다.
 - 커밋 메시지: "webtoon <EP> (ChatGPT)" 로 main 에 올린다.
 
 [3. 비하인드 스토리 — Claude 가 실패한 날만]
-- 읽을 것: daily/<오늘>/ai_run.md (있으면), 어제 날짜의 daily/<어제>/work_summary.md · team_note.md · pm_decision.md, novel/STORY_SO_FAR.md, TEAM_CHARACTERS.md, novel/BIBLE.md
-- 쓸 것: 짧은 이야기 한 편 (한국어, 누구나 읽는 쉬운 말, 본문 800~1,300자)
+- 먼저 소설 가이드라인을 읽는다 (비하인드도 디플로이 픽션의 한 편이다):
+  - novel/MANIFESTO.md — 디플로이 픽션이 무엇이고 무엇을 지키는가 (일곱 원칙)
+  - novel/BIBLE.md — 사실과 상상의 경계, 세계 설정, 쓰지 말 것
+  - novel/CRAFT_UPGRADE.md — 문체 원칙 (서두르지 않는 속도, 호기심, 작은 사실의 무게, 열린 질문 하나로 끝내기)
+  - novel/CHARACTERS.md 의 "쓰지 말 것"과 "의장과 한 팀이 되는 장면", TEAM_CHARACTERS.md
+  - novel/STORY_SO_FAR.md 와 가장 최근 회차 한 편 (이어지는 흐름)
+- 그다음 그날의 사실을 읽는다: daily/<오늘>/ai_run.md (있으면), 어제 날짜의 daily/<어제>/work_summary.md · team_note.md · pm_decision.md
+- 시점: 소설 본편의 "나"(배 마케터)는 이날 글을 쓰지 못했다. 그러니 비하인드는 **3인칭**으로, 스튜디오를 바깥에서 지켜보는 시선으로 쓴다.
+- 쓸 것: 짧은 이야기 한 편 (한국어, 누구나 읽는 쉬운 말, 본문 800~1,300자, 위 가이드라인의 문체 그대로)
   - 제목: "〈비하인드〉 " 로 시작하는 한 줄
   - 뼈대는 실제로 일어난 일만: "오늘 새벽, 팀을 깨우는 작업이 멈췄다"는 사실과, 최근 기록에 실제로 남은 장면(어제 팀원끼리 남긴 한마디, 하던 일)을 다시 들여다보는 이야기.
   - AI 팀원들의 속마음·표정은 상상해도 된다. 일어나지 않은 사건, 결정, 실패를 지어내지 않는다.
