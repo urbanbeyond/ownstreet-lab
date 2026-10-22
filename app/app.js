@@ -65,8 +65,6 @@ const chat = {
   runId: 0           // 다시 시작했을 때 이전 대기 중 말풍선을 무시하기 위한 번호
 };
 
-init();
-
 function init() {
   renderStaticInfo();
   bindDialogs();
@@ -1292,3 +1290,10 @@ function bindDialogs() {
 function prefersReducedMotion() {
   return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
+
+/* init() 호출은 파일 맨 끝에 둔다 (10-23 수정): 이 위치면 위에서 선언한 모든 const
+   (QUESTIONS, GOOGLE_ICON 등)가 이미 평가된 뒤라 init() → initChat() → loadDraft() 경로가
+   QUESTIONS 를 안전하게 참조할 수 있다. 전에는 파일 맨 위(17행대)에서 즉시 호출되어, 아직
+   선언되지 않은(TDZ) QUESTIONS 를 참조해 ReferenceError 가 나고 loadDraft() 의 try/catch 가
+   이를 조용히 삼켜 "이어하기"가 항상 null 을 반환했다. */
+init();
