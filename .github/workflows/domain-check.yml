@@ -11,7 +11,7 @@ jobs:
     steps:
       - name: Check ownstreet.team
         run: |
-          for h in ownstreet.team www.ownstreet.team; do
+          for h in ownstreet-lab.netlify.app ownstreet.team www.ownstreet.team; do
             echo "::notice title=DNS $h::A=$(dig +short A $h | tr '\n' ' ') | CNAME=$(dig +short CNAME $h | tr '\n' ' ') | AAAA=$(dig +short AAAA $h | tr '\n' ' ')"
             for proto in https http; do
               out=$(curl -sS -o /tmp/body -m 20 -w 'code=%{http_code} redirect=%{redirect_url} ssl_verify=%{ssl_verify_result}' "$proto://$h/" 2>&1 | tr '\n' ' ')
