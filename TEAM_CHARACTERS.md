@@ -5,6 +5,8 @@
 >
 > **이 문서의 목적**: urbanbeyond 를 처음 본 사람도 사진 한 장과 짧은 글만으로 "누가 무슨 일을 하고, 어떤 사람인지"를 자연스럽게 알게 하는 것.
 > 그래서 인물마다 **외모 → 외모가 말해 주는 역할 → 성격 → 일하는 방식 → 말투 → 팀 안에서의 자리** 순서로, 겉모습과 역할이 한 줄로 이어지게 썼다.
+>
+> **살아 있는 문서다 (의장 원칙, 2026-10-23).** 업무를 하면서 정해지는 것 중 캐릭터와 이어지는 것은 **자동으로 이 문서에 반영한다.** 매일 새벽 배 마케터가 그날 기록을 읽고 고치며, 대화 중에 의장이 정한 것은 그 자리에서 반영한다. 무엇을 어떻게 적는지는 맨 아래 **6. 캐릭터 기록 원칙과 변경 기록**을 따른다.
 
 ---
 
@@ -357,3 +359,35 @@ AI 다섯 명과 일하는 단 한 명의 사람. 선언문과 지시로 시작�
 - 배 마케터: `slim young man in early 20s, 178cm, soft wavy brown-black hair, small mole under left eye, oversized black zip jacket with a small mustard patch on left chest, light gray tee, black wide cargo pants, white sneakers, thin black crossbody strap, holding a small yellow notebook or pocket recorder`
 - 이 의장: `man in an all-black outfit, black cap with a black hood pulled over it, black zip hoodie and wide black pants, one hand in pocket with a simple ring, plain black sneakers without logos` (얼굴 표현은 0번 확인 후)
 - 스튜디오: `a streetwear print studio and shop: printed t-shirts on hangers, a heat press machine, yellow walls with framed art and hanji calligraphy panels, a red sofa in the center, a silver equipment case on the floor, warm spot lighting`
+
+---
+
+## 6. 캐릭터 기록 원칙과 변경 기록
+
+### 원칙 (의장 결정, 2026-10-23)
+업무를 진행하면서 결정되는 사항 중 **캐릭터와 연결될 수 있는 요소는 자동으로 이 문서에 저장한다.**
+
+**무엇을 적나**
+- **의장이 정한 것**: 이름, 호칭, 대표 문장, 외모·소품·색, 역할 분담, 그리기 규칙 (`DIRECTION.md`, 대화 중 결정)
+- **역할의 변화**: 누가 무엇을 새로 맡거나 내려놓았나 (예: 공개 대상이 소설로 바뀌어 배 마케터가 SNS 판을 쓰게 됨)
+- **성격이 드러난 행동**: 기록에 남은 실제 행동 중 그 사람다움을 보여 주는 것 (예: 범위 밖 버그를 고치지 않고 재현 방법까지 적어 남김, 자기 테스트의 실수를 스스로 찾음)
+- **반복되는 습관·말·소품**: 두 번 이상 기록에 나온 말버릇, 일하는 방식, 새로 생긴 소품
+- **관계의 변화**: "팀원에게 한마디", 회의에서 부딪힌 의견, 서로 도운 일
+- **처음 있는 일**: 처음 성공, 처음 실패, 처음 LIVE 반영 같은 인물의 이정표
+
+**어떻게 적나**
+1. 해당 인물 섹션의 알맞은 칸(외모 / 성격 / 일하는 방식 / 말투 / 팀 안에서 / 기록에서 드러난 모습)을 고친다. 고정 요소나 이름이 바뀌었으면 **1. 한눈에 보기**와 **5. 고정 요소**도 같이 맞춘다.
+2. 아래 **변경 기록**에 한 줄을 더한다: `- 날짜 · 인물 · 무엇이 정해졌나/드러났나 · 근거(파일 또는 "의장 대화")`
+3. 소설에 영향을 주는 고정 요소(이름, 외모, 의장 규칙)가 바뀌었으면 `novel/CHARACTERS.md` 의 같은 항목도 맞춘다.
+
+**지키는 선**
+- **사실만 적는다.** 기록에 없는 행동이나 성격을 지어내 넣지 않는다. 한 번 나온 것은 "한 번"이라고 적고 일반화하지 않는다.
+- **의장은 실제 사람이다.** 의장 섹션에는 의장이 직접 정한 것과 실제로 한 행동·남긴 말만 적는다. 속마음·사생활·하지 않은 말은 적지 않는다.
+- 고객 정보, 계정, 키, 주소 같은 비밀값은 적지 않는다.
+- 아무것도 해당하지 않는 날은 고치지 않는다. 억지로 채우지 않는다.
+
+### 변경 기록
+- 2026-10-23 · 전원 · 단체 사진과 캐릭터 시트 6장을 기준으로 이 문서를 새로 정리함 · 의장 대화
+- 2026-10-23 · 이 의장 · 대표 문장을 "시작과 끝은, 언제나 사람의 손으로."로 수정 (이전: "마지막 결정은, 언제나 사람의 손에서.") · 의장 대화
+- 2026-10-23 · 배 마케터 · 공개 대상이 개발 포스트에서 디플로이 픽션으로 바뀌어, 매일 소설의 인스타그램 판(SNS 판)과 표지 문구를 쓰는 일이 더해짐 · 의장 대화, `CLAUDE.md`
+- 2026-10-23 · 전원 · 캐릭터와 연결되는 결정은 이 문서에 자동으로 저장한다는 원칙이 생김 · 의장 대화, `DIRECTION.md`
