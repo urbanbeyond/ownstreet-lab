@@ -8,7 +8,10 @@ app/ 를 LAB 용으로 변환해 build/lab/ 에 만든다. LIVE 고객과 결제
 4. 변환 뒤 다시 검사해서 LIVE 주소나 결제 링크가 하나라도 남아 있으면 빌드를 지우고 실패한다
    (이 경우 LAB 배포 단계는 건너뛴다)
 
-환경변수: LAB_APPS_SCRIPT_URL (필수)
+환경변수: LAB_APPS_SCRIPT_URL (선택)
+  - 있으면: 전체 LAB — 로그인·접수까지 되고, 요청은 LAB 시트에 저장된다.
+  - 없으면: LAB 미리보기 — 접수 서버 주소를 비우고(어디에도 요청이 가지 않음),
+    로그인 단계에서 "미리보기는 여기까지"로 멈춘다. 공개용으로 최신 화면을 보여 주기 위한 모드.
 """
 
 import os
@@ -36,6 +39,14 @@ BANNER = (
     '<b style="color:#F85003;letter-spacing:.08em">LAB</b> · AI 팀의 실험실 버전입니다. '
     "여기서 한 요청은 실제로 제작·결제되지 않아요.</div>"
 )
+PREVIEW_BANNER = (
+    '<div id="lab-banner" style="position:sticky;top:0;z-index:2147483647;'
+    "background:#13161B;color:#F6F3ED;font:600 13px/1.4 -apple-system,system-ui,sans-serif;"
+    'padding:9px 14px;text-align:center;border-bottom:3px solid #F85003">'
+    '<b style="color:#F85003;letter-spacing:.08em">LAB 미리보기</b> · AI 팀이 만든 최신 화면이에요. '
+    "로그인·접수는 연결돼 있지 않아 실제 주문은 되지 않아요.</div>"
+)
+PREVIEW_FLAG = "\n;(window.OWN_STREET_CONFIG = window.OWN_STREET_CONFIG || {}).labPreview = true; // LAB 미리보기 빌드\n"
 NOINDEX = '<meta name="robots" content="noindex,nofollow">'
 
 
@@ -67,12 +78,13 @@ def lab_pay_image(path: Path) -> None:
 
 
 def transform_text(text: str, lab_url: str, is_html: bool) -> str:
-    text = APPS_SCRIPT_RE.sub(lab_url, text)
+    text = APPS_SCRIPT_RE.sub(lab_url, text)  # 미리보기에서는 lab_url 이 "" → 주소가 비워진다
     text = KAKAOPAY_URL_RE.sub("#lab-no-payment", text)
     if is_html:
-        text, n = re.subn(r"(<body[^>]*>)", r"\1" + BANNER, text, count=1, flags=re.I)
+        banner = BANNER if lab_url else PREVIEW_BANNER
+        text, n = re.subn(r"(<body[^>]*>)", lambda m: m.group(1) + banner, text, count=1, flags=re.I)
         if n == 0:
-            text = BANNER + text
+            text = banner + text
         text, n = re.subn(r"</head>", NOINDEX + "</head>", text, count=1, flags=re.I)
     return text
 
@@ -95,9 +107,12 @@ def verify(lab_url: str) -> list[str]:
 
 def main() -> int:
     lab_url = os.environ.get("LAB_APPS_SCRIPT_URL", "").strip()
-    if not APPS_SCRIPT_RE.fullmatch(lab_url):
-        print("LAB_APPS_SCRIPT_URL 이 없거나 형식이 다름 — 안전을 위해 LAB 빌드를 만들지 않음")
+    preview = not lab_url
+    if lab_url and not APPS_SCRIPT_RE.fullmatch(lab_url):
+        print("LAB_APPS_SCRIPT_URL 형식이 다름 — 안전을 위해 LAB 빌드를 만들지 않음")
         return 2
+    if preview:
+        print("LAB_APPS_SCRIPT_URL 없음 → LAB 미리보기로 빌드 (접수 서버 연결 없음, 로그인 단계에서 멈춤)")
     if not APP.exists():
         print("app/ 폴더가 없음")
         return 2
@@ -121,6 +136,14 @@ def main() -> int:
                 changed_urls += len(APPS_SCRIPT_RE.findall(before)) + len(KAKAOPAY_URL_RE.findall(before))
                 f.write_text(after, encoding="utf-8")
 
+    if preview:
+        cfg = OUT / "config.js"
+        if not cfg.exists():
+            shutil.rmtree(OUT, ignore_errors=True)
+            print("config.js 없음 — 미리보기 표시를 붙일 수 없어 빌드하지 않음")
+            return 1
+        cfg.write_text(cfg.read_text(encoding="utf-8") + PREVIEW_FLAG, encoding="utf-8")
+
     problems = verify(lab_url)
     if problems:
         shutil.rmtree(OUT, ignore_errors=True)
@@ -129,7 +152,8 @@ def main() -> int:
             print(" -", p)
         return 1
 
-    print(f"LAB 빌드 완료 → build/lab (주소·결제 링크 {changed_urls}곳 교체, 결제 이미지 {replaced_imgs}개 교체, 배너 추가)")
+    kind = "LAB 미리보기" if preview else "LAB"
+    print(f"{kind} 빌드 완료 → build/lab (주소·결제 링크 {changed_urls}곳 교체, 결제 이미지 {replaced_imgs}개 교체, 배너 추가)")
     return 0
 
 

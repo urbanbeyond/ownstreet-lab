@@ -49,6 +49,7 @@ OWN STREET는 그 비전이 실제 서비스가 되는 곳이다.
 - AI 팀의 모든 작업은 먼저 **LAB 사이트**에 자동 배포된다. LAB 은 누구나 볼 수 있는 공개 실험실이다.
 - **LIVE(실제 고객이 쓰는 사이트)는 의장이 버튼을 눌러야만 바뀐다.** AI 팀은 LIVE 를 직접 바꿀 수 없다.
 - LAB 배포 시 워크플로가 자동으로 백엔드 주소를 LAB 전용으로 바꾸고, 결제 링크·QR 을 막고, "LAB" 배너를 붙인다.
+  - LAB 전용 접수 서버가 아직 없으면 **LAB 미리보기**로 배포된다: 접수 서버 주소를 비우고, 채팅은 로그인 단계에서 "미리보기는 여기까지"로 멈춘다. 누구나 최신 화면을 눌러볼 수 있게 하기 위한 모드다 (2026-10-23).
 - 그러므로 AI 팀은 `config.js` 의 `requestEndpoint`(Apps Script 주소), `firebase` 설정, `payment.kakaopayLink`, `contactUrl`, 그리고 `kakaopay-qr.svg` 파일을 **바꾸지 않는다.** 필요하면 OPERATOR_TODO.md 에 요청한다.
 
 ## 백엔드와 사람의 손

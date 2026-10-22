@@ -436,6 +436,12 @@ async function askLogin() {
 }
 
 function showLoginChoice(onDone) {
+  // LAB 미리보기 빌드(LAB 접수 서버가 아직 없을 때)에서만 켜진다. LIVE 에서는 이 값이 없다.
+  if (CFG.labPreview) {
+    botNow('LAB 미리보기는 여기까지예요.\n로그인부터 접수까지는 실제 서비스에서 할 수 있어요.');
+    setChoices([{ label: '실제 서비스로 가기', primary: true, href: 'https://ownstreet.life' }]);
+    return;
+  }
   setChoices([{
     label: 'Google로 로그인', google: true, id: 'chatLogin',
     onPick: async () => {
