@@ -192,4 +192,5 @@ jobs:
           git config user.email "ai-team@users.noreply.github.com"
           git add -A
           git commit -m "Day ${{ steps.today.outputs.date }} (${{ steps.today.outputs.mode }})" || echo "변경 없음"
-          git push
+          # 같은 저장소에 ChatGPT(웹툰)·발행 작업도 올리므로, 충돌하면 최신을 받아 다시 올린다
+          for i in 1 2 3; do git pull --rebase -q origin main && git push && break; echo "올리기 재시도 $i"; sleep 10; done

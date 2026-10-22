@@ -80,7 +80,8 @@ OWN STREET 는 **의장 1명과 AI 팀원 5명**으로 이루어진 스타트업
 
 ## 하루와 한 주 (한국 시간)
 - 매일 03:52 — 개발 사이클. 댓글 수집 → PM → 오늘의 역할 한 명 → 마케터(개발 기록 포스트·분위기 메모·웹소설 한 편과 그 SNS 판) → LAB 배포 → 스크린샷 → 소설 발행 준비 → 커밋
-- 매일 08:00 — **디플로이 픽션 그날 회차**를 인스타그램(SNS 판)·페이스북(전문)에 발행 (사람 검수 없음). 개발 기록 포스트(`post.json`)는 공개하지 않고 저장만 한다 (의장 결정, 2026-10-23)
+- 매일 04:40 · 06:10 — **ChatGPT** 가 마케터의 웹툰 콘티(`novel/webtoon/EP###/brief.md`)를 읽고 실사 기반 웹툰 컷을 그려 올린다. 새벽 작업이 실패해 회차가 없는 날은 ChatGPT 가 **비하인드 스토리**(`novel/behind/`)를 대신 만든다 (지시문: `docs/GPT_WEBTOON_TASK.md`, 의장 결정 2026-10-23)
+- 매일 08:00 — **디플로이 픽션 그날 회차**를 인스타그램(표지 + 웹툰 컷, SNS 판)·페이스북(전문)에 발행 (사람 검수 없음). 개발 기록 포스트(`post.json`)는 공개하지 않고 저장만 한다 (의장 결정, 2026-10-23)
 - **월요일(과 맨 첫날)은 팀 회의의 날.** 코드를 고치지 않는다. 세 명의 팀원(진 디자이너 → 윤 개발자 → 신 브랜더)이 차례로 의견을 내고, 김 PM 이 결정하고, 마케터가 회의록을 쓴다.
 - 평일 작업을 마친 팀원은 work_summary 끝에 **"팀원에게 한마디"**를 남긴다. 마케터는 그날의 분위기를 읽고 **"분위기 메모"**를 남긴다. 다음 날 PM 이 둘 다 읽는다. 팀원 사이의 대화가 곧 이야기다.
 
@@ -97,7 +98,7 @@ OWN STREET 는 **의장 1명과 AI 팀원 5명**으로 이루어진 스타트업
 - `daily/YYYY-MM-DD/` — `pm_decision.md`, `work_summary.md`, `team_note.md`(마케터의 분위기 메모), `post.json`(개발 기록, 저장용), `hero.jpg`, `screen.png`, `publish.json`(그날 발행할 소설 묶음), `published.json`
 - `meetings/YYYY-MM-DD/` — 월요일 회의: 팀원별 의견 파일, `minutes.md`(마케터가 쓰는 회의록)
 - `records/YYYY-MM-DD/` — 저장소 밖 기록의 요약 (`notes.md`). 없을 수 있다
-- `novel/` — 배 마케터의 웹소설: `BIBLE.md`(설정), `STORY_SO_FAR.md`(지금까지 줄거리), `episodes/EP001.md…`, `social/EP###.json`(SNS 판), `covers/EP###.jpg`(표지)
+- `novel/` — 배 마케터의 웹소설: `BIBLE.md`(설정), `STORY_SO_FAR.md`(지금까지 줄거리), `episodes/EP001.md…`, `social/EP###.json`(SNS 판), `covers/EP###.jpg`(표지), `webtoon/EP###/`(콘티 `brief.md` 는 마케터, 그림은 ChatGPT), `behind/`(실패한 날 ChatGPT 의 비하인드)
 - `ROADMAP.md` — 플랫폼까지의 길. 월요일 회의에서 PM 이 갱신
 - `CHANGELOG.md` — 버전 기록. 작업한 날마다 한 줄 이상 추가 (예: v0.3 — 주문 완료 화면에 제작 일정 안내 추가)
 - `OPERATOR_TODO.md` — 사람이 해야 할 일 요청

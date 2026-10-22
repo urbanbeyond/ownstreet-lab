@@ -4,6 +4,8 @@ AI 팀이 작업한 날마다 한 줄 이상 추가합니다. 위에 최신 기�
 형식: `- vX.Y (YYYY-MM-DD, 역할) — 무엇이 바뀌었나`
 LIVE 에 반영되면 의장 승인 워크플로가 `[LIVE]` 줄을 추가합니다.
 
+- (2026-10-23, 운영) — ChatGPT 웹툰 연결(의장 결정): 마케터가 매일 웹툰 콘티(`novel/webtoon/EP###/brief.md`, 1컷)를 쓰고, ChatGPT 가 04:40·06:10 에 그림을 올림. 새벽 작업이 실패한 날은 ChatGPT 가 비하인드 스토리(`novel/behind/`)와 발행 묶음을 만듦. 08:00 발행은 표지 + 웹툰 컷을 넘겨 보기로 묶음. 지시문 `docs/GPT_WEBTOON_TASK.md`. 같은 저장소에 여럿이 올리므로 새벽 작업의 올리기에 충돌 재시도 추가.
+
 - (2026-10-23 새벽, 운영) — 공개 대상 변경(의장 결정): 소비자에게 보이는 것은 디플로이 픽션 소설, 개발 포스트(post.json)는 저장만. 매일 08:00 발행이 그날 회차를 인스타그램(SNS 판)·페이스북(전문)으로 올리도록 바꿈. `scripts/prepare_novel_post.py` 추가(회차 → 표지·인스타 판·페이스북 전문 → daily/날짜/publish.json), 마케터에게 `novel/social/EP###.json`(인스타 판 본문·표지 문구) 쓰기 추가. 오늘 EP011 부터 적용.
 
 - v0.9 (2026-10-23, developer) — "이어하기"(답변 중간에 탭을 닫았다가 같은 세션에서 다시 열면 이어서 진행하는 기능)가 전혀 동작하지 않던 버그 수정: `app/app.js` 맨 위(17행대)에서 즉시 호출되던 `init()`이 `init() → initChat() → loadDraft()` 경로를 타며 아직 선언되지 않은(TDZ) `const QUESTIONS`(246행)를 참조해 `Cannot access 'QUESTIONS' before initialization` 예외가 났고, `loadDraft()`의 `try/catch`가 이를 조용히 삼켜 매번 `null`을 반환했다(10-22 developer 발견, 10-23 PM 결정으로 채택). `init()` 호출 위치만 파일 맨 끝(모든 top-level `const` 선언 이후)으로 옮겨 고침. Node 스크립트로 TDZ 에러를 먼저 재현한 뒤, Playwright로 sessionStorage에 가짜 draft(서버·실제 로그인 호출 없음)를 넣고 수정 전/후 콘솔 에러와 "이어서 진행합니다" 메시지 노출 여부를 비교 확인(수정 전: TDZ ReferenceError 발생, 이어하기 메시지 없음 / 수정 후: 에러 없음, 저장된 답변이 복원되고 이어하기 메시지 정상 노출, 로그인이 필요한 단계까지도 정상 복원). 서버(Code.gs)·config.js 변경 없음. LAB 에만 반영.
