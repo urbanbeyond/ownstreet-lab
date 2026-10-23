@@ -417,7 +417,8 @@ async function answer(step, raw) {
   const next = STEPS[idx + 1];
   if (next) {
     // 이름 질문 앞에서 로그인 확인 (개인정보 단계에 들어가기 전)
-    if (next === 'name' && !state.user) { await askLogin(); return; }
+    // LAB 미리보기에서는 이미 로그인된 사람이어도 이름(개인정보) 질문 전에 멈춘다
+    if (next === 'name' && (CFG.labPreview || !state.user)) { await askLogin(); return; }
     await askStep(next);
   } else {
     await showConfirm();
