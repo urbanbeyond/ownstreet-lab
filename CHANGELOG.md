@@ -6,6 +6,8 @@ AI 팀이 작업한 날마다 한 줄 이상 추가합니다. 위에 최신 기�
 
 LIVE 에 반영되면 의장 승인 워크플로가 `[LIVE]` 줄을 추가합니다.
 
+- [정기] v0.9.2 (2026-10-24, designer) — "이어하기(resume)" 가 실제 화면에서 자연스러운지 Playwright 로 직접 확인하다가, 모바일 375px 에서 로그인 직전까지 복원했을 때 "이어서 진행합니다"·로그인 안내 문구가 화면 아래 sticky 입력창(로그인 버튼)에 가려지는 버그를 발견해 고침: `resume()` 이 `chat.active`를 설정하지 않아 자동 스크롤(`keepInView()`)이 동작하지 않던 것이 원인. `resume()`에 `chat.active = true` 한 줄 추가(`app/app.js`). 수정 후 모바일 375px·데스크톱 1280px 모두 평소 채팅 흐름과 같은 간격으로 보임을 확인. `.order-edit`(10-22 수정) 데스크톱 1280px 폭 확인도 같이 함 — 깨짐 없음.
+
 - [비정기·운영] (2026-10-24 03:35) — LAB 공개 주소를 `ownstreet.team` 으로 전환: https 인증서(Let's Encrypt) 발급 확인 후 소설 SNS 판·비하인드의 LAB 주소 줄을 ownstreet.team 으로 바꿈(`scripts/prepare_novel_post.py`, `docs/GPT_WEBTOON_TASK.md`). `ownstreet-lab.netlify.app` 도 계속 열림. 임시 점검 워크플로 domain-check 삭제.
 
 - [비정기·의장] R-015 v0.9.1 (2026-10-23 13:20, 운영 즉시 반영) — 채팅의 질문(OWN STREET 말)은 네모 박스를 없애고 글자만, 네모 박스는 답(손님이 보낸 답·입력칸)에만 남김 (`app/styles.css`). 의장이 LAB 화면 캡처로 요청하고 "바로 적용해줘"라고 해서 팀 사이클(다음 날 03:52)을 기다리지 않고 반영. LAB 에만.

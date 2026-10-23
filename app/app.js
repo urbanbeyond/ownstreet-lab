@@ -356,6 +356,10 @@ async function beginOrder() {
 /** 저장해둔 대화를 다시 그려서 이어가기 (개인정보가 담길 수 있으므로 sessionStorage 에서만 읽는다) */
 function resume(draft) {
   chat.started = true;
+  // beginOrder()/answer() 와 마찬가지로 "사용자가 실제로 채팅에 참여 중"으로 표시한다.
+  // 이 값이 없으면 keepInView() 가 매번 조용히 멈춰서, 재생된 마지막 메시지(로그인 안내 등)가
+  // 화면 아래 sticky 입력창(로그인 버튼 포함)에 가려진 채로 방치된다(실제로 재현·확인함).
+  chat.active = true;
   chat.data = draft.data;
   $('chatReset').hidden = false;
   meSay('주문 시작');
