@@ -4,8 +4,9 @@ AI 팀이 작업한 날마다 한 줄 이상 추가합니다. 위에 최신 기�
 형식: `- [꼬리표] (R-번호) vX.Y (YYYY-MM-DD, 역할) — 무엇이 바뀌었나`
 꼬리표 (2026-10-23 의장 결정): `[정기]` 매일 새벽 팀 사이클 / `[비정기·의장]` 의장 요청으로 생긴 변경 (지시판의 R-번호를 같이 적음) / `[비정기·운영]` 자동화·설정 변경. 10-23 이전 줄은 소급해서 붙였다.
 
-- [비정기·운영] (2026-10-24 03:35) — LAB 공개 주소를 `ownstreet.team` 으로 전환: https 인증서(Let's Encrypt) 발급 확인 후 소설 SNS 판·비하인드의 LAB 주소 줄을 ownstreet.team 으로 바꿈(`scripts/prepare_novel_post.py`, `docs/GPT_WEBTOON_TASK.md`). `ownstreet-lab.netlify.app` 도 계속 열림. 임시 점검 워크플로 domain-check 삭제.
 LIVE 에 반영되면 의장 승인 워크플로가 `[LIVE]` 줄을 추가합니다.
+
+- [비정기·운영] (2026-10-24 03:35) — LAB 공개 주소를 `ownstreet.team` 으로 전환: https 인증서(Let's Encrypt) 발급 확인 후 소설 SNS 판·비하인드의 LAB 주소 줄을 ownstreet.team 으로 바꿈(`scripts/prepare_novel_post.py`, `docs/GPT_WEBTOON_TASK.md`). `ownstreet-lab.netlify.app` 도 계속 열림. 임시 점검 워크플로 domain-check 삭제.
 
 - [비정기·의장] R-015 v0.9.1 (2026-10-23 13:20, 운영 즉시 반영) — 채팅의 질문(OWN STREET 말)은 네모 박스를 없애고 글자만, 네모 박스는 답(손님이 보낸 답·입력칸)에만 남김 (`app/styles.css`). 의장이 LAB 화면 캡처로 요청하고 "바로 적용해줘"라고 해서 팀 사이클(다음 날 03:52)을 기다리지 않고 반영. LAB 에만.
 - [비정기·의장] R-016 v0.9.1 (2026-10-23 13:20, 운영 즉시 반영) — 이름 질문을 "신청자명(입금자명)을 알려주세요. 받는 분이 다르면 마지막 배송 요청에 적어주세요."로, 확인 카드·안내·개인정보 수집 항목의 "이름"을 "신청자명(입금자명)"으로 (`app/app.js`, `app/index.html`). 이유(의장): Google 계정 이름이 실제 이름과 다를 수 있고, 결제 확인에 입금자명이 필요함. 서버 저장 칸은 그대로. LAB 에만.
