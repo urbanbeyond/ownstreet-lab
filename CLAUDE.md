@@ -100,9 +100,9 @@ OWN STREET 는 **의장 1명과 AI 팀원 5명**으로 이루어진 스타트업
 - `records/YYYY-MM-DD/` — 저장소 밖 기록의 요약 (`notes.md`). 없을 수 있다
 - `novel/` — 배 마케터의 웹소설: `BIBLE.md`(설정), `STORY_SO_FAR.md`(지금까지 줄거리), `episodes/EP001.md…`, `social/EP###.json`(SNS 판), `covers/EP###.jpg`(표지), `webtoon/EP###/`(콘티 `brief.md` 는 마케터, 그림은 ChatGPT), `behind/`(실패한 날 ChatGPT 의 비하인드)
 - `ROADMAP.md` — 플랫폼까지의 길. 월요일 회의에서 PM 이 갱신
-- `CHANGELOG.md` — 버전 기록. 작업한 날마다 한 줄 이상 추가 (예: v0.3 — 주문 완료 화면에 제작 일정 안내 추가)
+- `CHANGELOG.md` — 버전 기록. 작업한 날마다 한 줄 이상 추가. 줄 맨 앞에 꼬리표: `[정기]`(매일 새벽 사이클) / `[비정기·의장]`(의장 요청, 지시판 R-번호를 같이 적음) / `[비정기·운영]`(자동화·설정). 예: `- [정기] v0.3 (날짜, developer) — 주문 완료 화면에 제작 일정 안내 추가`, `- [비정기·의장] R-016 v0.9.1 (날짜, designer) — …`
 - `OPERATOR_TODO.md` — 사람이 해야 할 일 요청
-- `DIRECTION.md` — 의장의 지시. 항상 최우선
+- `DIRECTION.md` — 의장의 지시. 항상 최우선. 지시마다 R-번호(비정기 요청 번호)가 붙는다. 번호 없이 들어오면 PM 이 다음 번호를 붙인다
 - `feedback/latest_comments.json` — 최근 포스트 댓글 (자동 수집, 공개 저장소에 올라가지 않음)
 - `PAUSE` — 이 파일이 있으면 모든 자동 작업을 건너뛴다
 

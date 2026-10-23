@@ -1,0 +1,40 @@
+name: LAB Deploy (수시)
+
+# 비정기 업데이트용: 의장 요청을 낮에 바로 반영할 때, AI 팀 사이클 없이 app/ 을 LAB 에만 다시 올린다.
+# LIVE 는 건드리지 않는다 (LIVE 는 promote-live.yml, 의장 버튼). 매일 사이클과 겹치지 않게 같은 줄을 선다.
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: daily-cycle
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install tools
+        run: pip install -q pillow
+      - name: Build LAB version (swap backend, block payment, add banner)
+        env:
+          LAB_APPS_SCRIPT_URL: ${{ secrets.LAB_APPS_SCRIPT_URL }}
+        run: python scripts/build_lab.py
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Deploy to LAB site
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_LAB_SITE_ID: ${{ secrets.NETLIFY_LAB_SITE_ID }}
+        run: |
+          npx -y netlify-cli@latest deploy --dir=build/lab --prod \
+            --site="$NETLIFY_LAB_SITE_ID" --auth="$NETLIFY_AUTH_TOKEN" \
+            --message="LAB 수시 반영 $(TZ=Asia/Seoul date '+%F %H:%M')"

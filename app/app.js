@@ -270,12 +270,12 @@ const QUESTIONS = {
     }
   },
   name: {
-    label: '이름',
-    ask: '받는 분 이름을 알려주세요.',
+    label: '신청자명(입금자명)',
+    ask: '신청자명(입금자명)을 알려주세요.\n받는 분이 다르면 마지막 배송 요청에 적어주세요.',
     input: { type: 'text', placeholder: '홍길동', maxlength: 40, autocomplete: 'name' },
     parse(raw) {
       const v = cleanName(raw);
-      return v ? { value: v } : { error: '이름을 다시 확인해주세요.\n40자까지 입력할 수 있습니다.' };
+      return v ? { value: v } : { error: '신청자명을 다시 확인해주세요.\n40자까지 입력할 수 있습니다.' };
     }
   },
   phone: {
@@ -429,7 +429,7 @@ async function answer(step, raw) {
 async function askLogin() {
   chat.step = 'login';
   setProgress(STEPS.indexOf('name'));
-  await botSay('이제부터는 이름·연락처·주소를 여쭤봅니다.\n접수 확인을 위해 Google 로그인이 필요합니다.');
+  await botSay('이제부터는 신청자명·연락처·주소를 여쭤봅니다.\n접수 확인을 위해 Google 로그인이 필요합니다.');
   if (chat.step !== 'login') return;
   showLoginChoice(() => askStep('name'));
 }
@@ -502,7 +502,7 @@ async function showConfirm(instant) {
   cb.id = 'consent';
   label.append(cb, el('span', 'box'), el('span', '', '개인정보 수집 및 이용에 동의합니다.'));
   label.querySelector('.box').setAttribute('aria-hidden', 'true');
-  const info = el('p', 'consent-info', '수집: 이름, 전화번호, 배송 주소, 이미지 URL, Google 이메일 · 목적: 제작 요청 확인, 연락, 배송 ');
+  const info = el('p', 'consent-info', '수집: 신청자명(입금자명), 전화번호, 배송 주소, 이미지 URL, Google 이메일 · 목적: 제작 요청 확인, 연락, 배송 ');
   const more = el('button', 'link', '자세히 보기');
   more.type = 'button';
   more.addEventListener('click', () => $('privacyDialog').showModal());

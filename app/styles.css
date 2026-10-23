@@ -332,10 +332,11 @@ details[open] .acc-sign { transform: rotate(45deg); }
   white-space: pre-line;
   overflow-wrap: anywhere;
 }
-.msg.bot .bubble { background: var(--card); color: var(--foreground); }
+/* 의장 요청(2026-10-23): 질문(OWN STREET 말)은 박스 없이 글자만, 네모 박스는 답(손님이 보낸 답·입력칸)에만 */
+.msg.bot .bubble { background: transparent; color: var(--foreground); border: 0; padding: 2px 0; max-width: 100%; }
 .msg.me .bubble { background: var(--foreground); color: var(--background); }
-.msg.warn .bubble { border-left-width: 8px; border-left-color: var(--destructive); }
-.msg.status .bubble { color: var(--muted-foreground); border-style: dashed; }
+.msg.bot.warn .bubble { border-left: 4px solid var(--destructive); padding: 2px 0 2px 12px; }
+.msg.bot.status .bubble { color: var(--muted-foreground); }
 
 .msg.wide { align-items: stretch; }
 .card {
