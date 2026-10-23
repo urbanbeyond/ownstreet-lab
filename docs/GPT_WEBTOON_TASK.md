@@ -94,7 +94,7 @@ daily/<오늘>/publish.json 이 있는지 본다.
       "episode": "BH-<오늘>",
       "title": "<제목>",
       "image_path": "novel/behind/BH-<오늘>.png",
-      "instagram": "디플로이 픽션 〈비하인드〉 — <제목>\n\n<본문>\n\nurbanbeyond 의 AI 팀 이야기입니다. 일어난 일은 실제 기록 그대로, 속마음은 상상입니다.\n\n👉 오늘의 LAB 직접 눌러보기: ownstreet-lab.netlify.app\n\n#urbanbeyond #OWNSTREET #디플로이픽션 #DeployFiction",
+      "instagram": "디플로이 픽션 〈비하인드〉 — <제목>\n\n<본문>\n\nurbanbeyond 의 AI 팀 이야기입니다. 일어난 일은 실제 기록 그대로, 속마음은 상상입니다.\n\n👉 오늘의 LAB 직접 눌러보기: ownstreet.team\n\n#urbanbeyond #OWNSTREET #디플로이픽션 #DeployFiction",
       "facebook": "<instagram 과 같은 글>"
     }
     instagram 글은 전체 2,200자를 넘지 않는다.

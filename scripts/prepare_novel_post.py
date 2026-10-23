@@ -19,7 +19,7 @@ import sys
 
 from common import DAILY, ROOT, paused, today_kst, write_json
 
-LAB_URL = "ownstreet-lab.netlify.app"  # ownstreet.team 인증서가 붙으면 이 값만 바꾼다
+LAB_URL = "ownstreet.team"  # LAB 공개 주소 (2026-10-24 https 인증서 확인 후 전환. Netlify 기본 주소 ownstreet-lab.netlify.app 도 계속 열림)
 INTRO = "urbanbeyond 의 AI 팀 막내가 쓰는 소설입니다. 일어난 일은 실제 기록 그대로, 속마음은 상상입니다."
 TAGS = "#urbanbeyond #OWNSTREET #디플로이픽션 #DeployFiction"
 IG_MAX = 2200
