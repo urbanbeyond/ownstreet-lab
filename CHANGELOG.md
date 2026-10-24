@@ -6,6 +6,8 @@ AI 팀이 작업한 날마다 한 줄 이상 추가합니다. 위에 최신 기�
 
 LIVE 에 반영되면 의장 승인 워크플로가 `[LIVE]` 줄을 추가합니다.
 
+- [정기] (2026-10-25, developer) — LIVE 에 막 반영된(R-017) 채팅 화면에서, 10-24 designer 가 `resume()`에서 발견한 "`chat.active`를 빼먹으면 `keepInView()`가 조용히 멈춰 메시지가 입력창에 가려지는" 버그 패턴이 다른 진입점에도 있는지 점검. `editStep()`(주문 확인 카드 "수정"), `recheckPending()`/`settleOldPending()`(접수 확인 재시도 흐름)을 코드로 먼저 확인한 결과 `editStep()`은 처음부터 `chat.active = true`가 있었고, `recheckPending()`/`settleOldPending()`은 `chat.active`가 이미 true로 설정된 주문 흐름(`placeOrder()` 이후) 안에서만 호출되는 구조라 별도 설정이 필요 없음을 코드로 확인. Playwright 로 가짜 Firebase 로그인 + 접수 서버 응답을 모의(NETWORK 오류, 알 수 없는 코드, 지연 성공 각각)해 `editStep()`·`recheckPending()`·`settleOldPending()`(실패/성공 양쪽) 네 경로를 모두 실제로 밟아 `boundingBox()` 좌표로 겹침 여부를 수치 확인 — 전부 겹침 없음(문제 없음). `COMPONENTS.md`의 "상태 안내는 muted-foreground + 점선 테두리" 설명이 10-23 봇 말풍선 박스 제거 이후 실제 CSS(점선 테두리 없음)와 어긋나 있던 것을 문서만 고침. 코드(`app/app.js`) 변경 없음.
+
 - [LIVE] 2026-10-24 19:31 — v0.9.2 이 실제 서비스(ownstreet.life)에 반영됨 (R-017 의장 요청: 채팅 주문 화면을 실제 서비스에 반영, LIVE 서버 v2 확인 후)
 - [비정기·의장] R-017 (2026-10-24 19:31, 운영) — 채팅 주문 화면을 실제 서비스에 반영. 먼저 의장이 LIVE 접수 서버(ownstreetdb 의 Apps Script)를 v2 로 교체: 스크립트 속성 SPREADSHEET_ID 저장 → 코드 교체 → setup ✅ 3줄(시트 연결·머리글 13칸·Firebase 키) → 기존 배포의 새 버전으로 배포(서버 주소 그대로). 코드 교체·setup·배포는 의장이 Chrome 의 Claude 확장으로 진행. 운영이 Server Check 로 `version 2 · ready · storage` 확인 뒤 Promote LAB to LIVE 실행. 절차 문서 `docs/LIVE_반영_가이드.md`. 반영 기록 줄이 맨 아래 "## 기록" 밑에 들어가고 버전을 못 읽던 워크플로를 고쳐 위쪽에 쓰도록 함. 임시 점검 워크플로 server-check 삭제.
 
