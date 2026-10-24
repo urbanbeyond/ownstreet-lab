@@ -63,13 +63,13 @@ jobs:
 
       - name: Record in CHANGELOG
         run: |
-          VER=$(grep -m1 -oE '^- v[0-9]+\.[0-9]+' CHANGELOG.md | sed 's/^- //' || true)
+          VER=$(grep -m1 -oE '^- \[(정기|비정기[^]]*)\] (R-[0-9]+ )?v[0-9]+\.[0-9]+(\.[0-9]+)?' CHANGELOG.md | grep -oE 'v[0-9.]+$' || true)
           NOTE="${{ github.event.inputs.note }}"
           LINE="- [LIVE] $(date +%F) — ${VER:-현재 버전} 이 실제 서비스에 반영됨${NOTE:+ ($NOTE)}"
           python3 - "$LINE" <<'PY'
           import sys, pathlib
           p = pathlib.Path("CHANGELOG.md"); t = p.read_text(encoding="utf-8")
-          marker = "## 기록\n\n"
+          marker = "LIVE 에 반영되면 의장 승인 워크플로가 `[LIVE]` 줄을 추가합니다.\n\n"
           p.write_text(t.replace(marker, marker + sys.argv[1] + "\n", 1), encoding="utf-8")
           PY
           git config user.name "ownstreet-chair"
