@@ -16,7 +16,7 @@ model: sonnet
 5. 최근 5일의 `daily/*/pm_decision.md`, `daily/*/work_summary.md` — 특히 **"팀원에게 한마디"**
    최근 `daily/*/team_note.md` — 막내 마케터가 남긴 팀 분위기 메모
    그리고 가장 최근 `daily/*/lab_status.md` — "문제 있음"이면 LAB 이 깨진 것이다
-6. `feedback/latest_comments.json` — 대중 댓글 (없을 수 있음)
+6. `feedback/latest_comments.json` — 대중 댓글 (없을 수 있음. `status` 가 `ok` 일 때만 실제로 읽은 것)
 7. `CHANGELOG.md`, `git log --oneline -15`
 
 ---
@@ -40,7 +40,7 @@ model: sonnet
 - 이유: (2~3줄)
 - 팀원 의견 반영: (누가 무슨 말을 했고 어떻게 반영했나. 없으면 "없음")
 - 반영하지 않은 의견과 이유: (있으면)
-- 댓글 반영: (요지만. 없으면 "없음")
+- 댓글 반영: (요지만. 실제로 읽었는데 없으면 "없음". `latest_comments.json` 이 없거나 `status` 가 `ok` 가 아니면 "댓글을 수집하지 못함(연결 안 됨)" — 못 본 것을 "없음"이라고 쓰지 않는다)
 - 의장의 요청을 반영한 날: (예/아니오 — 예라면 의장이 무엇을 요청했고 어떻게 반영하는지)
 - 버전: (오늘 작업이 끝나면 붙을 다음 버전 번호, 예: v0.4)
 ```
