@@ -17,7 +17,7 @@
 | # | 무엇이 다른가 | 새 시트·단체 사진 | 기존 규칙 |
 |---|---|---|---|
 | 1 | 의장의 이름 | **이도한** | 이성진 (소설 속 가명) |
-| 2 | 의장의 얼굴 | 실제 사진, 얼굴이 보임 | "얼굴은 그리지 않는다. 뒷모습·손·어깨까지만" |
+| 2 | 의장의 얼굴 | 실제 사진, 얼굴이 보임 | ✅ 2026-10-27 의장 결정: **얼굴을 쓴다** (원문 "쓰지 뭐"). 시트의 얼굴 그대로 그린다 (R-020) |
 | 3 | 단체 사진의 이름표 | "김태**운**", "**전**나리" | 김태**윤**, **진**나리 (시트도 이쪽이 맞음) → 사진 이름표 오타로 보임 |
 | 4 | 실제 브랜드로 보이는 로고 | 윤중훈 운동화의 N 로고, 의장 운동화의 세 줄, 의장 노트북의 사과 로고 | "실제 브랜드 로고를 넣지 않는다" → 공개 이미지·웹툰에서는 로고 없이 그린다 |
 
@@ -413,7 +413,7 @@ ENFP 는 흔히 가능성을 먼저 보고, 사람을 움직여 새 일을 시�
 | 진 디자이너 | 얼굴, 일자 앞머리 단발, 오른쪽 눈 아래 점 | 전부 검정 + 코발트 한 줄(어깨 실선·노트 밴드·펜), 금속 자 | 재킷 ↔ 블랙 니트·셔츠, 머리를 귀 뒤로 넘김 |
 | 윤 개발자 | 얼굴, 짧은 곱슬머리, 수염 그림자 | 포레스트 그린 하나(필드 재킷·모자·머그), 회색 후드, 초록 노트나 테스트 폰 | 재킷을 벗어 의자에 걸기, 소매 걷기, 백팩 유무 |
 | 배 마케터 | 얼굴, 부드러운 웨이브 머리, 왼쪽 눈 아래 점 | 머스터드 포인트 하나(가슴 패치·노란 노트), 얇은 크로스백 | 집업 ↔ 카디건·후드, 티 색(라이트 그레이 계열), 녹음기 유무 |
-| 이 의장 | 검은 모자와 후드, 전부 검정 | 주머니 속 손과 반지 | 변형은 최소로. 얼굴 표현은 0번 확인 후 결정 |
+| 이 의장 | 얼굴(시트 그대로), 검은 모자와 후드, 전부 검정 | 주머니 속 손과 반지, 검은 노트·텀블러 | 변형은 최소로 |
 
 ### 공통 규칙
 - **그림체**: 캐릭터 시트는 반실사 일러스트에 밝은 회색 배경의 잡지형 레이아웃. 웹툰 컷은 같은 얼굴을 **실사체**(시네마틱 실사 사진 결)로 그린다. 만화체(만화 선·셀 채색)는 쓰지 않는다 (의장 결정 2026-10-23). 배경은 OWN STREET 스튜디오.
@@ -458,7 +458,7 @@ ENFP 는 흔히 가능성을 먼저 보고, 사람을 움직여 새 일을 시�
 
 **D. 그래도 지키는 선**
 - ① 절대 고정은 바꾸지 않는다. ② 시그니처는 매 컷 하나 이상 보이게 한다.
-- 점의 방향(진 디자이너 오른쪽, 배 마케터 왼쪽), 로고 금지, 말풍선·설명 박스 말고는 글자 금지, 의장 얼굴 규칙은 그대로.
+- 점의 방향(진 디자이너 오른쪽, 배 마케터 왼쪽), 로고 금지, 말풍선·설명 박스 말고는 글자 금지, 의장 얼굴은 시트 그대로(바꾸지 않는다).
 
 ### 이미지 생성용 한 줄 묘사 (영문)
 - 김 PM: `lean man in early 40s, 185cm, neatly swept black hair with a single silver streak on the right side, thin rectangular metal glasses, midnight navy blazer with a small silver bar on the left lapel, ivory high-neck knit, black trousers, black leather shoes, holding a small blank memo card`
@@ -466,7 +466,7 @@ ENFP 는 흔히 가능성을 먼저 보고, 사람을 움직여 새 일을 시�
 - 진 디자이너: `slim woman in early 30s, 168cm, sleek black chin-length bob with straight bangs, small mole under right eye, all-black tailored jacket with a cobalt blue stitch line along the left shoulder, black turtleneck, wide black trousers, holding a thin metal ruler`
 - 윤 개발자: `solidly built man in late 30s, 182cm, short tight curly black hair, light stubble, forest green field jacket with asymmetric chest pockets, gray hoodie, black wide pants, plain black sneakers without logos, backpack, holding a test smartphone or green notebook`
 - 배 마케터: `slim young man in early 20s, 178cm, soft wavy brown-black hair, small mole under left eye, oversized black zip jacket with a small mustard patch on left chest, light gray tee, black wide cargo pants, white sneakers, thin black crossbody strap, holding a small yellow notebook or pocket recorder`
-- 이 의장: `man in an all-black outfit, black cap with a black hood pulled over it, black zip hoodie and wide black pants, one hand in pocket with a simple ring, plain black sneakers without logos` (얼굴 표현은 0번 확인 후)
+- 이 의장: `man in an all-black outfit, black cap with a black hood pulled over it, black zip hoodie and wide black pants, one hand in pocket with a simple ring, plain black sneakers without logos` + 얼굴은 의장 캐릭터 시트(ChatGPT 프로젝트 파일)의 얼굴 그대로 (2026-10-27)
 - 스튜디오: `a streetwear print studio and shop: printed t-shirts on hangers, a heat press machine, yellow walls with framed art and hanji calligraphy panels, a red sofa in the center, a silver equipment case on the floor, warm spot lighting`
 
 ---
@@ -520,3 +520,5 @@ ENFP 는 흔히 가능성을 먼저 보고, 사람을 움직여 새 일을 시�
 - 2026-10-24 · 진 디자이너 · "알아가는 중" 두 항목이 확인됨 단계로 올라감: (1) 직접 재지 않은 것은 밝히고 자기 측정의 실수도 스스로 고치는 모습 — 검증 방법 자체(전체 캡처 vs 뷰포트 캡처)까지 의심해 다시 확인하는 근거 추가, (2) 윤 개발자와 다음 날 일을 서로 남겨 주는 사이 — 10-22·10-23 두 번 반복된 요청을 10-24 그대로 받아 처리한 근거 추가 · `daily/2026-10-24/work_summary.md`
 - 2026-10-25 · 윤 개발자 · "알아가는 중" 두 항목이 확인됨 단계로 올라가 성격·팀 안에서 칸에 정식 반영됨: (1) 확인한 것과 못 한 것을 가른다 — 코드로 "구조적으로 안전하다" 판단한 뒤에도 Playwright 로 세 진입점(`editStep()`·`recheckPending()`·`settleOldPending()`)을 전부 실제로 걸어보고서야 결론을 확정한 근거 추가, (2) 진 디자이너와 다음 날 일을 서로 남겨 주는 사이 — 10-24 디자이너가 찾은 버그 패턴을 10-25 윤 개발자가 다른 세 곳에 점검해 "문제 없음"을 직접 보고한 근거 추가 · `daily/2026-10-25/work_summary.md`
 - 2026-10-26 · 신 브랜더 · "알아가는 중"에 첫 항목 추가(한 번 보임): Stage 2 착수가 10-11·10-19·10-26 세 번째로 미뤄진 것에 대해 회의에서 우려를 솔직하게 밝히고, 곧바로 손 놓고 기다리지 않겠다며 코드 아닌 준비 작업 세 가지를 스스로 제안함 · `meetings/2026-10-26/brand-feature-developer.md`, `daily/2026-10-26/pm_decision.md`
+- 2026-10-27 · 이 의장 · 얼굴을 쓰기로 함 — 웹툰·이미지에서 시트의 얼굴 그대로 그린다(이전: 뒷모습·손·어깨만). 이름(이도한 / 이성진)은 아직 0번 표에 남아 있음 · 의장 대화 ("쓰지 뭐"), `DIRECTION.md` R-020
+- 2026-10-27 · 전원 · 소설은 막내가 받아 적는 방식에서 "두 사람 이상이 서로 말하는 장면" 중심으로, 웹툰은 재미 규칙(훅·리액션 컷·둘 이상·소품·짧게·마지막 컷)으로 — 버릇과 소품은 묘사가 아니라 서로 주고받는 데 쓴다 · 의장 대화, `DIRECTION.md` R-019
