@@ -199,10 +199,14 @@ details[open] .acc-sign { transform: rotate(45deg); }
 .receipt { font-size: 36px; line-height: 40px; letter-spacing: 0.05em; user-select: all; }
 
 .modal-actions { margin-top: 24px; display: grid; gap: 10px; }
+/* "닫기"는 한글이라 font-display(Anton, 영문 전용)를 쓰면 Pretendard 400으로 폴백되어
+   가늘어 보인다. COMPONENTS.md "한글 버튼/라벨은 font-sans 굵게" 규칙에 맞춰 font-sans 700을
+   기본으로 둔다(2026-10-27 designer, COMPONENTS.md 대조 중 발견·수정). */
 .btn-modal {
   width: 100%;
   border: 2px solid var(--foreground);
   padding: 12px 24px;
+  font-family: var(--font-sans); font-weight: 700;
   font-size: 14px; line-height: 20px; text-transform: uppercase; letter-spacing: 0.05em;
   cursor: pointer;
   transition: transform .06s ease;

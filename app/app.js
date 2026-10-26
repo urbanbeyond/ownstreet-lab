@@ -270,7 +270,12 @@ const QUESTIONS = {
     }
   },
   name: {
-    label: '신청자명(입금자명)',
+    // label 은 확인 카드(.order-row dt)의 76px 라벨 칸에도 그대로 쓰인다. "신청자명(입금자명)"
+    // 전체 문구는 그 칸 폭에서 2줄로 줄바꿈되어 다른 행(1줄)과 높이가 달라지고 baseline 정렬이
+    // 어긋나 보였다(2026-10-27 designer, Playwright 로 boundingBox·클라이언트 rect 수 2 확인).
+    // "(입금자명)" 의미는 질문 문구(ask)와 개인정보 동의 안내(consent-info)에 그대로 남아 있으므로
+    // 좁은 라벨 칸에서만 축약한다.
+    label: '신청자명',
     ask: '신청자명(입금자명)을 알려주세요.\n받는 분이 다르면 마지막 배송 요청에 적어주세요.',
     input: { type: 'text', placeholder: '홍길동', maxlength: 40, autocomplete: 'name' },
     parse(raw) {
