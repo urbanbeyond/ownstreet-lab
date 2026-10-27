@@ -390,7 +390,7 @@ details[open] .acc-sign { transform: rotate(45deg); }
 /* 뒷면 프린트 목업: 손님 이미지를 직접 끌어와 보여주지 않는다(받는 것은 이미지 파일 주소가 아니라
    "채팅 링크"). 어디에, 얼마나 크게 프린트되는지 자리만 짚어주는 정적 목업이다. */
 .mockup-card { display: grid; gap: 10px; justify-items: center; text-align: center; }
-.mockup-img { width: 120px; height: 130px; }
+.mockup-img { width: 200px; max-width: 70%; height: auto; }
 .mockup-note { font-size: 13px; color: var(--muted-foreground); }
 
 /* 입력 영역 */

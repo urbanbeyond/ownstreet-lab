@@ -836,8 +836,8 @@ function buildMockupCard(size) {
   const img = document.createElement('img');
   img.className = 'mockup-img';
   img.src = './assets/tee-back-mockup.svg';
-  img.alt = '티셔츠 뒷면 목업 — 점선 안쪽이 실제 프린트 위치(뒷면 단일, 최대 A3)';
-  img.width = 120; img.height = 130;
+  img.alt = '피그먼트 차콜 티셔츠 뒷면 사진 — 점선 안쪽이 실제 프린트 위치(뒷면 단일, 최대 A3)';
+  img.width = 581; img.height = 534; // 의장 요청 R-023: 실제 상품 사진(배경 제거) + A3 점선
   wrap.append(img);
   const note = el('p', 'mockup-note',
     (size ? size + ' 사이즈 · ' : '') + '뒷면 단일 프린트 · 최대 A3 사이즈');
