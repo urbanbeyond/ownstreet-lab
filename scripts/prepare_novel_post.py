@@ -20,7 +20,9 @@ import sys
 from common import DAILY, ROOT, paused, today_kst, write_json
 
 LAB_URL = "ownstreet.team"  # LAB 공개 주소 (2026-10-24 https 인증서 확인 후 전환. Netlify 기본 주소 ownstreet-lab.netlify.app 도 계속 열림)
-INTRO = "urbanbeyond 의 AI 팀 막내가 쓰는 소설입니다. 일어난 일은 실제 기록 그대로, 속마음은 상상입니다."
+INTRO = "urbanbeyond AI 팀 막내가 쓰는 소설이야. 일어난 일은 실제 기록 그대로, 속마음은 상상."  # 공식 계정 말투는 수평어 (의장 결정 2026-10-29, R-024)
+THREADS_MAX = 500
+THREADS_TAIL = "\n\n— AI 팀 막내의 회사 일지 · 소설 전문은 페이스북 urbanbeyond"
 TAGS = "#urbanbeyond #OWNSTREET #디플로이픽션 #DeployFiction"
 IG_MAX = 2200
 DEFAULT_ACCENT = "#F85003"
@@ -104,7 +106,7 @@ def main() -> int:
 
     header = f"디플로이 픽션 {ep} — {title}"
     lab = f"👉 오늘의 LAB 직접 눌러보기: {LAB_URL}"
-    ig_tail = f"\n\n전문은 페이스북 urbanbeyond 페이지에 있어요.\n\n{lab}\n\n{TAGS}"
+    ig_tail = f"\n\n전문은 페이스북 urbanbeyond 페이지에 있어.\n\n{lab}\n\n{TAGS}"
     ig_head = f"{header}\n\n"
     room = IG_MAX - len(ig_head) - len(ig_tail) - len(INTRO) - 4
     if len(ig_body) > room:
@@ -112,7 +114,16 @@ def main() -> int:
     instagram = f"{ig_head}{ig_body}\n\n{INTRO}{ig_tail}"
     facebook = f"{header}\n\n{INTRO}\n\n{full}\n\n{lab}\n\n{TAGS}"
 
-    for name, text in (("instagram", instagram), ("facebook", facebook)):
+    # 스레드 판 (의장 결정 2026-10-29, R-025): 막내가 쓴 threads_body 가 있을 때만. 자동으로 만들지 않는다.
+    th_body = (social.get("threads_body") or "").strip() if social.get("safety_check") == "passed" else ""
+    threads = ""
+    if th_body:
+        room = THREADS_MAX - len(THREADS_TAIL)
+        if len(th_body) > room:
+            th_body = th_body[: room - 1].rsplit("\n", 1)[0].rstrip() + "…"
+        threads = th_body + THREADS_TAIL
+
+    for name, text in (("instagram", instagram), ("facebook", facebook), ("threads", threads)):
         if SECRET_RE.search(text):
             print(f"{name} 글에 비밀값처럼 보이는 글자가 있어 발행 파일을 만들지 않음")
             return 1
@@ -134,6 +145,7 @@ def main() -> int:
         "image_path": f"novel/covers/{ep}.jpg",
         "instagram": instagram,
         "facebook": facebook,
+        "threads": threads,
         "instagram_auto": auto,
     }
     (DAILY / day).mkdir(parents=True, exist_ok=True)
