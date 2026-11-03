@@ -1,6 +1,6 @@
-# PROJECT AIDO — 화·목 urbanbeyond 발행
+# PROJECT AIDO — 화·목 urbanbeyond
 
-> 의장 결정 2026-11-03 (R-027): OWN STREET 는 월·수·금, **화·목은 PROJECT AIDO** 가 urbanbeyond 계정(인스타그램·페이스북·스레드)을 채운다.
+> 의장 결정 2026-11-03 (R-027): OWN STREET 는 월·수·금, **화·목은 PROJECT AIDO** 가 urbanbeyond 계정을 채운다. AIDO 는 자동 발행하지 않는다 — AI 가 짜고 의장이 직접 올린다.
 > 이 폴더는 공개 저장소다. 의장의 원본 마스터 문서 전체를 두지 않고, 발행에 필요한 기준만 옮겨 적는다 (출처: 의장의 `PROJECT_AIDO_MASTER_2026-11-03.md`).
 
 ## 1. AIDO 가 무엇인가
@@ -26,21 +26,13 @@
 - 색: 블루·화이트 중심, 노을빛 오렌지로 마무리 (OWN STREET 의 오프화이트·시그널 오렌지와 구분).
 - 공식 로고·마스코트 가이드는 아직 승인 전. 승인되면 이 문서에 적는다.
 
-## 4. 발행 방식
-- 발행 묶음: `aido/posts/YYYY-MM-DD/publish.json` (화·목 날짜)
-  ```json
-  {"source":"aido","status":"ready","date":"YYYY-MM-DD","title":"…",
-   "media":["aido/posts/YYYY-MM-DD/01.jpg", "…"],
-   "threads_image":"aido/posts/YYYY-MM-DD/01.jpg",
-   "instagram":"…","facebook":"…","threads":"…"}
-  ```
-  - `status` 가 `"ready"` 일 때만 발행한다. 의장이 먼저 보고 싶으면 `"draft"` 로 둔다.
-  - `media` 는 저장소 안 경로(최대 10장, 인스타그램은 이미지 1장 이상 필수). `threads` 가 비어 있으면 스레드는 건너뛴다.
-- Claude 예약 작업 **"PROJECT AIDO 화·목 SNS 발행 (Metricool)"** 이 화·목 07:40 에 08:00 예약(못 했으면 12:40 에 바로) 한다. 발행하면 같은 폴더에 `published.json` 을 남긴다.
-- 그날 묶음이 없거나 `ready` 가 아니면 발행하지 않고 의장에게 알림만 보낸다.
-- 영상(쇼츠)은 아직 이 자동 발행에 넣지 않는다 — 첫 영상이 실제로 공개되면 방식을 정한다.
+## 4. 발행 방식 — 자동 발행 없음
+- AIDO 의 구조는 **AI 가 짜고, 사람(의장)이 실행한다.** 그래서 화·목 글은 Claude 예약 작업으로 자동 등록하지 않는다 (의장 2026-11-03: "예약을 하지 않아도 되어 그건 chat gpt에서 알아서 할거라서", "자동 등록은 못해 왜냐하면 ai가 짜면 내가 실행하는 구조라서").
+- 기획·대본은 ChatGPT 쪽에서 하고, 촬영·업로드·게시는 의장이 직접 한다.
+- 이 저장소의 OWN STREET 자동 작업(새벽 사이클·Metricool 발행)은 화·목에 돌지 않는다. `aido/` 는 AI 팀 사이클이 건드리지 않는다.
+- `aido/drafts/` 의 글과 이미지는 참고용 초안이다. 쓸지 말지, 고칠지는 의장이 정한다.
 
-## 5. 발행 기록
-| 날짜 | 내용 | 상태 |
-|---|---|---|
-| 2026-11-05 (목) | AIDO 소개 — 팀 소개 연재 3편 "챌린지 프로젝트 aido" | ready (Claude 작성, 2026-11-03) |
+## 5. 초안
+| 파일 | 내용 |
+|---|---|
+| `drafts/2026-11-05-intro/` | AIDO 소개 — 팀 소개 연재 3편 "챌린지 프로젝트 aido" (인스타·페이스북·스레드 글 + 카드 1장, Claude 초안 2026-11-03) |
