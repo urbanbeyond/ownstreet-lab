@@ -18,6 +18,8 @@
 - 모든 누르는 요소는 최소 **48px 높이**를 지킨다: `.send`, `.composer .own-input`, `.choice`. 글자만 있는 링크형 버튼(`.link`, `.is-ghost`)은 예외지만 상하 여백으로 탭 영역을 넓힌다.
 - 주요 행동 버튼(`주문하기`, `카카오페이로 결제하기`)은 폭 100% + `padding: 16px 24px` 로 화면에서 가장 크게 둔다. 그 다음 중요도는 `.choice.is-primary`(오렌지 배경), 그 다음은 일반 `.choice`(흰 배경 + 테두리), 가장 낮은 것은 `.is-ghost`(밑줄만).
 - 사이즈 칩(`.choice.is-size`)은 숫자/영문 한 글자~세 글자라 `min-width: 58px` 로 정사각형에 가깝게 눌러도 손가락이 안 겹치게 한다.
+- **채팅 밖(푸터·아코디언 바깥) 요소에도 같은 48px 규칙이 적용된다.** `.footer-links`의 Privacy/Terms/Contact 버튼은 대화 흐름이 아니라 "안 눌러도 되지만 눌렀을 때 중요한" 글자형 버튼인데, `min-height: 32px`로 남아 있던 것을 2026-11-04 designer 가 Playwright 실측(375px 폭)으로 발견·48px로 수정했다. 글자형 버튼이라 폰트 크기·패딩은 그대로 두고 `min-height`만 올려 섹션 톤(작은 대문자 라벨)은 유지한다. 지금까지 채팅 영역(말풍선·카드·칩)만 48px 기준으로 점검돼 왔고, 아코디언·푸터·모달처럼 채팅 밖 영역은 점검 사각지대였다 — 새 컴포넌트를 추가할 때는 채팅 안/밖을 가리지 않고 이 규칙을 적용한다.
+- `.btn-modal`(모달 "닫기" 버튼, `padding: 12px 24px` + `font-size: 14px/line-height: 20px`)은 패딩+라인하이트 계산상 44px로 보이지만, Pretendard 실제 폰트 메트릭으로 렌더링하면 48px로 측정된다(2026-11-04 Playwright 실측 확인). 폰트를 바꾸면 이 여유가 사라질 수 있으니, 폰트 교체 시 다시 실측해야 한다.
 
 ## 색 사용 규칙
 - 오렌지(`--accent`)는 "지금 눌러야 하는 것·가장 중요한 숫자"에만 쓴다: 주 행동 버튼, 결제 금액, 진행 막대, 섹션 번호(`01`). 한 화면에 오렌지가 너무 많아지면 무엇이 중요한지 흐려지므로 카드 안에서 1곳을 넘기지 않는다.
@@ -45,3 +47,12 @@ Anton은 영문 전용 디스플레이 폰트라 한글을 넣으면 Pretendard�
 ## 자주 쓰는 카드 레이아웃
 - `.mockup-card`, `.pay-card`: `display: grid; gap: 10px; justify-items: center; text-align: center;` — 중앙 정렬형 정보 카드의 공통 패턴. 새 "정보 보여주기 전용" 카드를 추가할 때 이 패턴을 재사용한다.
 - `.order-card`: 좌측 라벨 + 우측 값 + 수정 버튼의 3열 그리드(`76px 1fr auto`). 항목을 나열하고 각 항목을 수정할 수 있어야 하는 카드에 재사용한다.
+
+## PRODUCT/CUSTOM INFO 아코디언, 사이즈표, Privacy/Terms 모달 (2026-11-04 designer, 첫 점검)
+채팅 대화 흐름(말풍선·카드·칩)은 10-16 이후 여러 번 점검됐지만, 이 영역은 2026-11-04 전까지 `COMPONENTS.md` 기준 점검 기록이 없었다. Playwright 로 375px 폭에서 실제 렌더링해 확인한 결과:
+- **아코디언(`.accordion details`)**: `summary` 탭 영역이 실측 60px — 48px 규칙 통과. `.bullets` 안 글줄은 `line-height: 1.625`(14px 기준 22.75px)로 config.js 의 가장 긴 문장(노출/권한/오차 안내 등)도 375px 안에서 가로 스크롤 없이 자연스럽게 줄바꿈된다. 문제 없음, 코드 변경 없음.
+- **사이즈표(`.size-table`)**: `.table-scroll`(overflow-x: auto)로 감싸져 있지만 375px 폭에서는 `scrollWidth === clientWidth`(335px)로 실제 가로 스크롤이 발생하지 않는다 — 5개 열(총장/어깨/가슴/암홀/소매장) + SIZE 라벨 열이 `padding: 8px 7px`(479px 이하 전용 축소값)로 충분히 줄어들어 들어간다. 대화 중 열리는 `#sizeDialog`(모달 안 사이즈표)도 동일 클래스를 써서 같은 결과. 문제 없음, 코드 변경 없음.
+- **Privacy/Terms 모달(`.modal.modal-doc`)**: 본문 `.bullets`(14px/22.75px), `.modal-text.small`(16px/25.6px) 모두 375px에서 가로 스크롤 없이 줄바꿈되고, "닫기" 버튼(`.btn-modal`)은 실측 48px 높이로 규칙을 지킨다. 문제 없음, 코드 변경 없음.
+- **푸터 Privacy/Terms/Contact 버튼(`.footer-links a/button`)**: 유일하게 어긋나 있던 부분. `min-height: 32px`로 48px 규칙 미달 — 위 "버튼 크기" 절에 수정 내용 기록. 코드 변경함.
+
+확인 방법: `npx playwright`(chromium)로 로컬 `python3 -m http.server`에 올린 `app/index.html`을 375×812 뷰포트로 열어, 로그인 없이 아코디언을 전부 열고 Privacy/Terms/사이즈 다이얼로그를 `showModal()`/클릭으로 띄운 뒤 `boundingClientRect`, `scrollWidth`/`clientWidth`를 측정했다. 서버 호출·로그인 없는 정적 렌더링 확인(과거 디자이너 점검과 동일 방식).
