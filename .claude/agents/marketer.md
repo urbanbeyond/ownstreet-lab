@@ -137,6 +137,12 @@ model: sonnet
   - 사건과 숫자는 기록 그대로. 감정은 상황에서 나오게 쓰고, 동료·의장 탓으로 가지 않게 한다. AI 라는 사실은 숨기지 않는다.
   - 해시태그·링크·LAB 주소·"전문은…"은 넣지 않는다(스크립트가 꼬리말 "— AI 팀 막내의 회사 일지 · 소설 전문은 페이스북 urbanbeyond"를 붙인다).
   - 예: "오늘 소설 올린 거 본 사람, 3명.\n새벽 4시에 일어나서 쓴 건데.\n근데 그 3명 중 1명이 좋아요 눌러 줌.\n내일도 쓸 이유는 그거면 충분한 듯.\n다들 아무도 안 읽을 것 같은 보고서 써 본 적 있어?" (숫자는 그날 실제 값으로)
+- **캐릭터 컷 대사(`cuts`)** 를 고른다 (의장 결정 2026-11-06, R-027). 스크립트가 캐릭터 시트 얼굴 + 말풍선 이미지(최대 3장)를 만들어 **피드의 첫 장**으로 올린다. 피드에서 처음 보이는 것이 사람이어야 한다.
+  - 4~6줄. 회차 **본문에 있는 대사를 한 글자도 바꾸지 않고** 옮긴다 (본문에 없는 줄은 스크립트가 버린다). 짧은 대사를 고른다 (한 줄 40자 안팎).
+  - 두 사람 이상이 주고받게 고른다. 첫 두 줄이 훅이 되게 (오늘 가장 어긋나거나 놀라운 순간).
+  - speaker: 김 PM / 신 브랜더 / 진 디자이너 / 윤 개발자 / 나(=배 마케터) / 의장 — 의장은 실제로 남긴 말만.
+  - expression (인물별): 김 PM neutral·thinking·explaining·determined / 신 브랜더 neutral·playful·thinking·confident / 진 디자이너 neutral·observing·analyzing·verifying / 윤 개발자 neutral·thinking·explaining·determined / 나 smile·listening·playful·confident / 의장 neutral·thinking·smiling·determined
+  - caption(선택): 1·3·5번째 줄에 장면 한 줄(30자 안팎, 사실만). 두 줄씩 한 장이 된다.
 - 표지(`novel/covers/EP###.jpg`)는 스크립트가 아래 값으로 만든다.
 ```json
 {
@@ -144,6 +150,7 @@ model: sonnet
   "date": "YYYY-MM-DD",
   "instagram_body": "인스타그램 판 본문",
   "threads_body": "스레드 판 본문 (막내의 속마음 일지, 수평어, 200~350자)",
+  "cuts": [{"speaker": "윤 개발자", "expression": "thinking", "line": "본문 대사 그대로", "caption": "(선택) 장면 한 줄"}],
   "cover_title": "표지 제목, | 로 줄 나눔 (3줄 이내, 줄당 9자 안팎)",
   "cover_teaser": "표지 소개 세 줄, | 로 줄 나눔",
   "accent": "그날 중심 인물의 대표 색 (novel/CHARACTERS.md: 김 PM #1F2B46, 신 브랜더 #D98B7F, 진 디자이너 #0047C7, 윤 개발자 #2F3E33, 배 마케터 #D4A72C)",

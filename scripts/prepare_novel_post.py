@@ -136,6 +136,8 @@ def main() -> int:
         [sys.executable, str(ROOT / "scripts" / "novel_cover.py"), ep, cover_title, cover_teaser, accent, focus],
         check=True,
     )
+    # 캐릭터 컷 (의장 결정 2026-11-06, R-027): 막내가 고른 실제 대사를 캐릭터 시트 얼굴과 말풍선으로. 실패해도 발행 준비는 계속.
+    subprocess.run([sys.executable, str(ROOT / "scripts" / "make_character_cuts.py"), ep], check=False)
 
     out = {
         "source": "novel",
