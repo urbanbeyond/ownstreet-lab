@@ -351,6 +351,7 @@ function greet() {
 
 async function beginOrder() {
   if (chat.started) return;
+  pingFunnel('begin'); // 주문 시작 — 이탈 집계
   chat.started = true;
   chat.active = true;
   $('chatReset').hidden = false;
@@ -387,6 +388,7 @@ function resume(draft) {
 async function askStep(step, instant) {
   chat.step = step;
   setProgress(STEPS.indexOf(step));
+  if (step === 'name') pingFunnel('name'); // name 단계 진입(=로그인 완료) — 이탈 집계
   const q = QUESTIONS[step];
   if (instant) botNow(q.ask); else await botSay(q.ask);
   if (chat.step !== step) return;
@@ -436,6 +438,7 @@ async function answer(step, raw) {
 
 /** 이름 질문 앞에서 Google 로그인 (접수에 꼭 필요해지는 시점에 둔다) */
 async function askLogin() {
+  pingFunnel('login'); // 로그인 안내 도달 — 이탈 집계
   chat.step = 'login';
   setProgress(STEPS.indexOf('name'));
   await botSay('이제부터는 신청자명·연락처·주소를 여쭤봅니다.\n접수 확인을 위해 Google 로그인이 필요합니다.');
@@ -477,6 +480,7 @@ function displayValue(step, value) {
 /* ---------- 주문 확인 카드 ---------- */
 
 async function showConfirm(instant) {
+  pingFunnel('confirm'); // 주문 확인 화면 도달 — 이탈 집계
   chat.step = 'confirm';
   setProgress(STEPS.length - 0.5); // 마지막 질문 뒤, 접수 전 — 거의 다 왔다는 정도만 보여준다
   retireCards();
@@ -564,6 +568,7 @@ async function editStep(step) {
 
 async function placeOrder() {
   if (chat.busy) return;
+  pingFunnel('order'); // 주문하기 시작 — 이탈 집계
   chat.active = true;
   chat.step = 'order';
   retireCards();
@@ -1102,6 +1107,45 @@ function loadDraft() {
 function clearSessionData() {
   clearDraft();
   state.pending = null;
+}
+
+/* ============================================================
+   이탈 집계 핑 (docs/funnel-drop-off-design.md 4절 최소 설계)
+   ------------------------------------------------------------
+   날짜 + 단계 이름만 담아 서버에 1회성으로 보낸다. 응답을 기다리지 않고,
+   실패해도 재시도하지 않는다 — 이 신호는 통계용이라 완벽할 필요가 없고,
+   재시도를 넣으면 가벼움(목적)을 잃는다. 개인정보(이름·전화번호·이메일·uid·
+   idToken)는 전혀 담지 않는다. 서버가 새 액션(action: 'ping')을 아직 모르면
+   (LAB/LIVE 배포 전) 서버가 조용히 무시하거나 BAD_REQUEST 로 답하는데, 이
+   응답도 기다리지 않으므로 화면에는 어떤 영향도 없다.
+   ============================================================ */
+/** 'yyyy-MM-dd' 한국 시간 기준 오늘 날짜 (Code.gs 의 TIMEZONE='Asia/Seoul' 과 같은 기준) */
+function todayKST() {
+  try {
+    const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit' })
+      .formatToParts(new Date());
+    const get = (t) => parts.find((p) => p.type === t).value;
+    return get('year') + '-' + get('month') + '-' + get('day');
+  } catch (e) {
+    return new Date().toISOString().slice(0, 10); // Intl 로케일 데이터가 없으면 UTC 날짜로라도 보낸다
+  }
+}
+
+function pingFunnel(step) {
+  try {
+    if (!CFG.requestEndpoint) return;
+    const body = JSON.stringify({
+      action: 'ping',
+      date: todayKST(), // 서버(Code.gs)와 같은 기준(한국 시간)으로 날짜를 맞춘다
+      step: step
+    });
+    fetch(CFG.requestEndpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: body,
+      keepalive: true
+    }).catch(() => { /* 응답을 기다리지 않는다. 실패해도 조용히 무시, 재시도 없음 */ });
+  } catch (e) { /* 통계용 신호이므로 어떤 오류도 주문 흐름에 영향을 주지 않는다 */ }
 }
 
 /* ============================================================

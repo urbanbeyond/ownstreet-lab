@@ -66,6 +66,13 @@ const TIMEZONE = 'Asia/Seoul';
 const ID_PREFIX = 'OS-';
 const SEQ_PROPERTY = 'OS_LAST_SEQ';
 
+// 이탈 집계용 핑(action: 'ping') 전용 시트. REQUESTS 와 완전히 분리된, 개인정보 없는 시트다.
+// docs/funnel-drop-off-design.md 4절의 최소 설계를 그대로 따른다: 날짜 + 단계 이름 두 칸만 쌓는다.
+const FUNNEL_SHEET_NAME = 'FUNNEL';
+const FUNNEL_HEADERS = ['날짜', '단계'];
+// app/app.js 가 보낼 수 있는 단계 이름만 받는다 (그 밖의 글자는 거절 — 자유 입력이 쌓이지 않도록).
+const FUNNEL_STEPS = ['begin', 'login', 'name', 'confirm', 'order'];
+
 /** 웹사이트 → 접수 요청 */
 function doPost(e) {
   let body;
@@ -74,8 +81,18 @@ function doPost(e) {
   } catch (err) {
     return json_({ ok: false, code: 'BAD_REQUEST' });
   }
+  body = body || {};
+
+  // 이탈 집계용 조용한 핑(action: 'ping')은 접수(action: 'request') 로직과 완전히 분리한다.
+  // 개인정보(이름·전화번호·이메일·uid·idToken)를 받지도, 저장하지도 않는다.
+  // 로그인 여부와 무관하게 호출되므로 로그인 전 이탈도 셀 수 있다.
+  // 이 경로가 실패해도 기존 접수 흐름에는 어떤 영향도 주지 않는다 (handleRequest_ 를 거치지 않음).
+  if (body.action === 'ping') {
+    return json_(handlePing_(body));
+  }
+
   try {
-    return json_(handleRequest_(body || {}));
+    return json_(handleRequest_(body));
   } catch (err) {
     console.error('접수 처리 오류: ' + (err && err.stack ? err.stack : err));
     return json_({ ok: false, code: 'SERVER_ERROR' });
@@ -328,6 +345,57 @@ function getSheet_() {
   if (!sheet) sheet = ss.insertSheet(SHEET_NAME);
   ensureHeaders_(sheet);
   return sheet;
+}
+
+/**
+ * 이탈 집계용 핑(action: 'ping') 처리.
+ *  - 받는 것: { date, step } 두 칸뿐. idToken·이름·전화번호·이메일·uid 는 전혀 받지 않는다
+ *    (로그인 여부와 무관하게 호출 가능해야 로그인 전 이탈도 잡을 수 있다 — 설계 문서 4절).
+ *  - REQUESTS 시트, 접수번호 발급, 로그인 확인과는 완전히 분리된 조용한 로직이다.
+ *    여기서 어떤 오류가 나도 doPost 의 다른 경로(접수)에는 영향을 주지 않는다 (doPost 에서
+ *    handleRequest_ 를 거치지 않고 바로 이 함수로 온다).
+ *  - 응답은 항상 { ok: true } 형태로 돌려준다 — 화면은 응답을 기다리지 않고 버리므로
+ *    실패를 구분해 알려줄 필요가 없다. 저장이 안 돼도 화면에는 어떤 영향도 없다.
+ */
+function handlePing_(body) {
+  try {
+    const date = cleanFunnelDate_(body.date);
+    const step = cleanFunnelStep_(body.step);
+    if (!date || !step) return { ok: true }; // 형식이 안 맞아도 조용히 무시 (통계용이라 재시도 없음)
+    const sheet = getFunnelSheet_();
+    const row = sheet.getLastRow() + 1;
+    sheet.getRange(row, 1, 1, FUNNEL_HEADERS.length).setValues([[date, step]]);
+  } catch (err) {
+    // 집계가 실패해도 접수 흐름과는 무관하므로 오류를 숨기고 조용히 끝낸다. 로그만 남긴다.
+    console.error('이탈 집계 실패(영향 없음): ' + (err && err.message ? err.message : err));
+  }
+  return { ok: true };
+}
+
+/** FUNNEL 시트를 연다. 없으면 만든다. REQUESTS 와 다른 전용 시트다 (고객 데이터 없음). */
+function getFunnelSheet_() {
+  const ss = getSpreadsheet_();
+  let sheet = ss.getSheetByName(FUNNEL_SHEET_NAME);
+  if (!sheet) {
+    sheet = ss.insertSheet(FUNNEL_SHEET_NAME);
+    sheet.getRange(1, 1, 1, FUNNEL_HEADERS.length).setValues([FUNNEL_HEADERS]).setFontWeight('bold');
+    sheet.setFrozenRows(1);
+  }
+  return sheet;
+}
+
+/** 'yyyy-MM-dd' 형식만 받는다. 그 밖은 '' (저장하지 않음) */
+function cleanFunnelDate_(v) {
+  if (typeof v !== 'string') return '';
+  const s = v.trim();
+  return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : '';
+}
+
+/** 화면이 보낼 수 있는 단계 이름만 받는다. 자유 입력은 받지 않는다. */
+function cleanFunnelStep_(v) {
+  if (typeof v !== 'string') return '';
+  const s = v.trim();
+  return FUNNEL_STEPS.indexOf(s) >= 0 ? s : '';
 }
 
 /**
