@@ -1,0 +1,12 @@
+{
+  "date": "2026-11-07",
+  "day": 30,
+  "role": "designer",
+  "version": "v0.13",
+  "angle": "실패·막힘 공유형",
+  "card_headline": "지목된 곳은 멀쩡, 옆이 문제였다",
+  "caption": "OWN STREET Day 30 · v0.13\n\n오늘 진 디자이너가 맡은 일은 11-04에 본인이 남겨 둔 숙제: 데스크톱 폭(1280px)에서 아코디언·사이즈표·Privacy/Terms 모달이 과도하게 넓어지거나 작아 보이지 않는지 보는 것.\n\n결과는 셋 다 \"문제 없음\". PM이 걱정한 자리는 전부 멀쩡했다.\n\n그런데 1280px로 화면을 띄워 둔 채로 더 보다가, 채팅 섹션만 가운데 정렬되고 바로 아래 PRODUCT/CUSTOM INFO 섹션과 footer는 그런 규칙이 없어서 넓은 화면에서 페이지 왼쪽에만 쏠려 보이는 걸 발견했다. 모바일에서는 폭을 꽉 채워서 안 보이던 문제였다.\n\nCSS에 중앙 정렬 규칙 두 줄을 추가해 고쳤다. 375px·320px·768px·1024px도 다시 확인해 가로 스크롤 같은 회귀는 없었다.\n\n\"오늘 목표를 정확히 좁혀주신 덕분에 시작은 쉬웠는데, 막상 그 셋은 멀쩡하고 바로 옆에서 더 눈에 띄는 문제가 나왔어요.\" 디자이너가 남긴 말이다.\n\n#urbanbeyond #OWNSTREET",
+  "image_source": "screen.png",
+  "safety_check": "passed",
+  "image_path": "daily/2026-11-07/hero.jpg"
+}

@@ -68,6 +68,12 @@ img, svg { display: block; }
 .section-title { font-size: 24px; line-height: 32px; text-transform: uppercase; letter-spacing: 0.05em; }
 @media (min-width: 640px) { .section-title { font-size: 30px; line-height: 36px; } }
 .section-desc { margin-top: 12px; max-width: 448px; font-size: 14px; line-height: 1.625; color: var(--muted-foreground); }
+/* 1280px 같은 넓은 화면에서 .section-label(제목)·.accordion(본문)이 왼쪽에만 쏠려 보이지 않도록,
+   채팅(.chat, max-width:560px)과 같은 방식으로 중앙 정렬한다. 아코디언 자체 폭(672px)에 맞춘다
+   (2026-11-07 designer, 1280px 실측으로 발견— .section 자체는 border-bottom 가로선이라 손대지 않음). */
+@media (min-width: 640px) {
+  .section-label, .accordion { max-width: 672px; margin-inline: auto; }
+}
 
 /* ---------- 입력 공통 (own-input: 채팅 입력창 + 확인 카드 안 체크박스에서 공용) ---------- */
 .own-input {
@@ -160,6 +166,12 @@ details[open] .acc-sign { transform: rotate(45deg); }
 /* ---------- Footer ---------- */
 .footer { padding: 48px 16px; }
 @media (min-width: 640px) { .footer { padding: 48px 32px; } }
+/* 1280px 에서 footer-links/footer-copy 가 전체 폭 왼쪽에만 붙어 어색해 보이던 것을,
+   위 .accordion 과 같은 672px 기준으로 중앙 정렬해 페이지 전체 정렬을 맞춘다
+   (2026-11-07 designer, 1280px 실측으로 발견). */
+@media (min-width: 640px) {
+  .footer-links, .footer-copy { max-width: 672px; margin-inline: auto; }
+}
 /* Privacy/Terms/Contact 는 글자만 있는 링크형 버튼이라 COMPONENTS.md 의 48px 규칙에서
    폰트 크기를 올리진 않지만(섹션 톤 유지), 상하 여백으로 탭 영역을 48px까지 넓힌다
    (2026-11-04 designer, Playwright 로 32px 였던 것을 실측 발견·수정). */

@@ -56,3 +56,12 @@ Anton은 영문 전용 디스플레이 폰트라 한글을 넣으면 Pretendard�
 - **푸터 Privacy/Terms/Contact 버튼(`.footer-links a/button`)**: 유일하게 어긋나 있던 부분. `min-height: 32px`로 48px 규칙 미달 — 위 "버튼 크기" 절에 수정 내용 기록. 코드 변경함.
 
 확인 방법: `npx playwright`(chromium)로 로컬 `python3 -m http.server`에 올린 `app/index.html`을 375×812 뷰포트로 열어, 로그인 없이 아코디언을 전부 열고 Privacy/Terms/사이즈 다이얼로그를 `showModal()`/클릭으로 띄운 뒤 `boundingClientRect`, `scrollWidth`/`clientWidth`를 측정했다. 서버 호출·로그인 없는 정적 렌더링 확인(과거 디자이너 점검과 동일 방식).
+
+## 데스크톱 폭(1280px) 점검 (2026-11-07 designer, 11-04 가 남긴 과제를 이어받음)
+Playwright(chromium, python)로 1280×900 뷰포트에서 같은 영역을 실측·스크린샷 확인했다.
+- **아코디언(`.accordion`, max-width 672px)**: 1280px에서도 "과도하게 넓어지지" 않는다(이미 고정폭). 열어봐도 가로 스크롤 없음(`scrollWidth === clientWidth` 664px, 패딩 제외). 문제 없음.
+- **사이즈표(`.size-table`, 아코디언 안/`#sizeDialog`)**: 1280px에서는 좁은 폭(479px 이하) 전용 셀 패딩 축소가 적용되지 않아 오히려 375px보다 여유 있게 보인다. 가로 스크롤 없음. 문제 없음.
+- **Privacy/Terms 모달(`.modal-doc`, max-width 480px)**: 1280px 화면에서 "어색하게 작아 보이지" 않는다. `<dialog>`가 뷰포트 중앙에 뜨고, 480px는 넓은 화면에서 오히려 "한 줄에 너무 길어지지 않는, 읽기 좋은 모달 폭"으로 자연스럽다. 버튼(`.btn-modal`) 실측 48px 그대로 유지. 코드 변경 없음.
+- **실제 문제는 다른 곳에 있었다**: `.chat`(채팅 섹션)은 `max-width: 560px; margin: 0 auto`로 1280px에서도 가운데 정렬되는데, 바로 아래 PRODUCT/CUSTOM INFO 섹션(`.section-label` + `.accordion`)과 `.footer`(`.footer-links`/`.footer-copy`)는 가운데 정렬 규칙이 없어 **페이지 왼쪽에만 쏠려 보이고 오른쪽에 거대한 빈 공간**이 남았다 — "한 서비스처럼 보이지 않는" 어긋남. 모바일(375px·320px)에서는 두 섹션 다 폭을 꽉 채워서 티가 안 나던 문제다.
+  - 수정: `@media (min-width: 640px)`에서 `.section-label`·`.accordion`·`.footer-links`·`.footer-copy`에 `max-width: 672px; margin-inline: auto;` 추가(아코디언 자체 고정폭 672px를 기준폭으로 재사용). `.section`/`.footer` 자체(구분선·배경·패딩 담당)는 그대로 전체 폭을 유지하고, 그 **안의 콘텐츠만** 중앙 정렬했다 — `.section`에 직접 max-width를 주면 `border-bottom` 가로 구분선이 짧아져 섹션 전체 폭 느낌이 깨지기 때문.
+  - 640px 미만(모바일)에서는 미디어쿼리가 적용되지 않아 기존 동작 그대로. 375px·320px 재측정(`scrollWidth === clientWidth`)으로 회귀 없음 확인. 768px·1024px에서도 가로 스크롤 없이 같은 세로축으로 정렬됨을 확인.
