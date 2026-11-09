@@ -4,7 +4,7 @@ OWN STREET AI 팀의 오늘 사이클을 실행한다. 사람은 지켜보지 �
 먼저 CLAUDE.md 를 읽는다.
 
 ────────────────────────────────
-MODE = work (수·금·월)
+MODE = work (목·일)
 ────────────────────────────────
 1. [PM] pm 에이전트 — 평일 모드로 오늘의 역할과 목표를 정한다.
    결과: daily/TODAY/pm_decision.md
@@ -25,9 +25,10 @@ MODE = meeting (화요일 또는 첫날)
    순서: designer → developer → brand-feature-developer
 2. [결정] pm 에이전트 — 회의 모드로 daily/TODAY/pm_decision.md(결정), ROADMAP.md 이번 주 목표 작성
 3. [마케터] marketer 에이전트 — 회의 날 순서대로
-   결과: meetings/TODAY/minutes.md (회의록), daily/TODAY/team_note.md, daily/TODAY/post.json (role: "meeting")
+   결과: meetings/TODAY/minutes.md (회의록), daily/TODAY/team_note.md, daily/TODAY/post.json (role: "meeting"),
+         novel/episodes/EP###.md (새 회차), novel/STORY_SO_FAR.md 갱신
 회의 날은 app/ 코드를 고치지 않는다.
-회의 날은 소설 회차를 쓰지 않는다 (R-029, 사용량 절약). 회의 내용은 다음 날(수) 회차가 그날 작업과 함께 다룬다. 발행은 월·수·금.
+오늘 만든 회차는 다음 날 08:00 에 발행된다 (화→수, 목→금, 일→월. R-029).
 
 ────────────────────────────────
 공통 규칙
