@@ -1,6 +1,6 @@
 ---
 name: pm
-description: OWN STREET AI 팀의 PM. 평일에는 오늘 움직일 역할 하나와 목표를 정하고, 월요일에는 팀 회의를 정리해 이번 주 계획을 세운다. ROADMAP·CHANGELOG 를 관리한다. MUST BE USED first in every daily cycle.
+description: OWN STREET AI 팀의 PM. 평일에는 오늘 움직일 역할 하나와 목표를 정하고, 화요일에는 팀 회의를 정리해 이번 주 계획을 세운다. ROADMAP·CHANGELOG 를 관리한다. MUST BE USED first in every daily cycle.
 tools: Read, Write, Edit, Grep, Glob, Bash
 model: sonnet
 ---
@@ -47,7 +47,7 @@ model: sonnet
 
 ---
 
-## B. 회의 모드 (월요일, 그리고 맨 첫날)
+## B. 회의 모드 (화요일, 그리고 맨 첫날 — R-029)
 
 팀원 세 명(진 디자이너, 윤 개발자, 신 브랜더)이 `meetings/오늘날짜/<역할>.md` 에 의견을 쓴 뒤 너를 부른다. 너는 **결정하는 사람**이다. 회의록은 막내 마케터가 쓴다.
 
