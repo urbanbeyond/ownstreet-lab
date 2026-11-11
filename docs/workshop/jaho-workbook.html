@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>OWN STREET — 1기 모임 워크북 (자호 짓기)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!--
+  OWN STREET — 1기 모임(2026-11-19) 워크북, A4 1장, 인쇄용.
+  이 파일은 app/ 서비스 코드와 무관한 정적 인쇄물이다. 브라우저에서 열어 Ctrl/Cmd+P 로 출력한다.
+  디자인 시스템(app/styles.css)과 같은 값을 이 파일 안에만 복사해 썼다 — 서비스 CSS를 import 하지 않는
+  이유는 이 문서가 혼자서도(인터넷 연결 없이, 다른 저장소로 옮겨도) 그대로 인쇄되게 하기 위함이다.
+
+  제목(영문)에 Anton을 쓰고, 한글 문항·안내문은 본문 글꼴(시스템 산세리프)을 굵게 써서 선명하게 한다.
+  (app/styles.css 의 기존 규칙과 같은 이유: Anton은 영문 전용 디스플레이 폰트라 한글엔 폴백된다.)
+
+  Anton 폰트 라이선스 재확인 (2026-11-12, designer):
+  scripts/fonts/OFL.txt 에 들어있는 SIL Open Font License 1.1 원문 확인함.
+  핵심 조항 — "The requirement for fonts to remain under this license does not apply
+  to any document created using the fonts or their derivatives." (전문 PREAMBLE)
+  즉 Anton으로 "만든 문서"(이 워크북 인쇄물 포함)는 OFL 적용 대상이 아니고, 자유롭게 인쇄·배포해도 된다.
+  인터넷 연결 없이 인쇄할 상황을 대비해 Google Fonts CDN 대신 로컬 TTF를 그대로 번들링했다
+  (scripts/fonts/Anton-Regular.ttf, OFL.txt 동봉 — 조건 2번: 재배포 시 라이선스 문구 동봉).
+-->
+<style>
+  @font-face {
+    font-family: "Anton";
+    src: url("../../scripts/fonts/Anton-Regular.ttf") format("truetype");
+    font-weight: 400;
+    font-display: swap;
+  }
+
+  :root {
+    --background: #F6F3ED;
+    --foreground: #13161B;
+    --card: #FCFAF6;
+    --accent: #F85003;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: #ddd;
+    font-family: "Apple SD Gothic Neo", "Malgun Gothic", "Pretendard", "Noto Sans KR", system-ui, sans-serif;
+    color: var(--foreground);
+  }
+
+  /* ---------- A4 page ---------- */
+  .page {
+    width: 210mm;
+    height: 297mm;
+    margin: 10mm auto;
+    background: var(--background);
+    border: 2px solid var(--foreground);
+    box-shadow: 4px 4px 0 var(--foreground);
+    padding: 12mm 14mm;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ---------- Header ---------- */
+  .wb-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    border-bottom: 2px solid var(--foreground);
+    padding-bottom: 6mm;
+    margin-bottom: 7mm;
+  }
+  .wb-kicker {
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    color: var(--accent);
+    text-transform: uppercase;
+    font-weight: 700;
+    margin-bottom: 2mm;
+  }
+  .wb-title {
+    font-family: "Anton", sans-serif;
+    font-weight: 400;
+    font-size: 30px;
+    line-height: 1.05;
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
+  }
+  .wb-title .accent { color: var(--accent); }
+  .wb-sub {
+    margin-top: 2mm;
+    font-size: 12.5px;
+    color: #4F5661;
+    max-width: 110mm;
+    line-height: 1.5;
+  }
+  .wb-meta {
+    text-align: right;
+    font-size: 11px;
+    color: #4F5661;
+    line-height: 1.7;
+  }
+  .wb-meta .name-line {
+    margin-top: 2mm;
+    font-size: 12px;
+    color: var(--foreground);
+  }
+  .wb-meta .fill-blank {
+    display: inline-block;
+    min-width: 32mm;
+    border-bottom: 2px solid var(--foreground);
+    margin-left: 2mm;
+  }
+
+  /* ---------- Intro line ---------- */
+  .wb-intro {
+    font-size: 12.5px;
+    line-height: 1.6;
+    color: var(--foreground);
+    background: var(--card);
+    border: 2px solid var(--foreground);
+    box-shadow: 3px 3px 0 var(--foreground);
+    padding: 4mm 5mm;
+    margin-bottom: 7mm;
+  }
+  .wb-intro b { color: var(--accent); }
+
+  /* ---------- Three columns ---------- */
+  .wb-steps {
+    display: flex;
+    gap: 5mm;
+    flex: 1;
+  }
+  .step {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: var(--card);
+    border: 2px solid var(--foreground);
+    box-shadow: 4px 4px 0 var(--foreground);
+    padding: 5mm 4.5mm;
+    min-width: 0;
+  }
+  .step-head {
+    display: flex;
+    align-items: baseline;
+    gap: 2.5mm;
+    margin-bottom: 3mm;
+    border-bottom: 2px solid var(--foreground);
+    padding-bottom: 3mm;
+  }
+  .step-num {
+    font-family: "Anton", sans-serif;
+    font-weight: 400;
+    font-size: 15px;
+    color: var(--accent);
+  }
+  .step-title {
+    font-size: 14.5px;
+    font-weight: 800;
+    letter-spacing: 0.01em;
+    line-height: 1.25;
+  }
+  .step-q {
+    font-size: 11.5px;
+    font-weight: 700;
+    line-height: 1.5;
+    margin-bottom: 2mm;
+  }
+  .step-help {
+    font-size: 10px;
+    line-height: 1.55;
+    color: #4F5661;
+    margin-bottom: 2.5mm;
+  }
+  .step-help.quote {
+    border-left: 2px solid var(--accent);
+    padding-left: 2.5mm;
+    font-style: normal;
+  }
+
+  /* fill-in lines */
+  .fill {
+    border: none;
+    border-bottom: 1.4px solid var(--foreground);
+    height: 6.5mm;
+    margin-bottom: 1.5mm;
+  }
+  .fill:last-of-type { margin-bottom: 0; }
+  .fill-row { display: flex; gap: 2mm; margin-bottom: 1.8mm; }
+  .fill-row .fill-tag {
+    font-size: 9.5px;
+    color: var(--accent);
+    font-weight: 800;
+    width: 4.5mm;
+    flex: none;
+    padding-top: 1mm;
+  }
+  .fill-row .fill { flex: 1; margin-bottom: 0; }
+
+  .step-body { flex: 1; display: flex; flex-direction: column; justify-content: flex-start; }
+  .step-spacer { flex: 1; }
+
+  /* name box for step 2 */
+  .name-box {
+    border: 2px solid var(--foreground);
+    background: var(--background);
+    height: 20mm;
+    margin: 2mm 0 3mm;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+  .name-box::after {
+    content: "나의 자호 (自號)";
+    position: absolute;
+    top: -2.6mm;
+    left: 3mm;
+    background: var(--card);
+    font-size: 8.5px;
+    color: var(--accent);
+    font-weight: 800;
+    padding: 0 1.5mm;
+  }
+
+  /* hint word bank placeholder (brand-feature-developer fills on 11-15) */
+  .hint-slot {
+    margin-top: auto;
+    border: 2px dashed var(--accent);
+    background: repeating-linear-gradient(
+      135deg, rgba(248,80,3,0.05) 0 6px, transparent 6px 12px
+    );
+    padding: 3mm 3mm;
+    font-size: 9.5px;
+    color: var(--accent);
+    line-height: 1.5;
+  }
+  .hint-slot b { display: block; font-size: 10.5px; margin-bottom: 1mm; }
+
+  /* meaning lines for step 3 */
+  .meaning-lines .fill { height: 7mm; }
+
+  /* ---------- Footer ---------- */
+  .wb-footer {
+    margin-top: 6mm;
+    padding-top: 4mm;
+    border-top: 2px solid var(--foreground);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 9.5px;
+    color: #4F5661;
+  }
+  .wb-footer .brand {
+    font-family: "Anton", sans-serif;
+    font-weight: 400;
+    font-size: 12px;
+    color: var(--foreground);
+    letter-spacing: 0.03em;
+  }
+  .wb-footer .brand .accent { color: var(--accent); }
+
+  /* ---------- Print ---------- */
+  @media print {
+    html, body { background: #fff; }
+    .page {
+      margin: 0;
+      box-shadow: none;
+      border: none;
+      width: 210mm;
+      height: 297mm;
+    }
+    @page { size: A4; margin: 0; }
+  }
+
+  /* ---------- Screen preview helper (not printed) ---------- */
+  .print-note {
+    max-width: 210mm;
+    margin: 4mm auto 0;
+    text-align: center;
+    font-size: 12px;
+    color: #4F5661;
+    font-family: system-ui, sans-serif;
+  }
+  @media print { .print-note { display: none; } }
+</style>
+</head>
+<body>
+
+<div class="page">
+
+  <div class="wb-header">
+    <div>
+      <div class="wb-kicker">OWN STREET · 1기 모임 워크북</div>
+      <div class="wb-title">나의 <span class="accent">자호</span> (自號) 짓기</div>
+      <div class="wb-sub">가장 나답고 가장 인간적인 삶, 그것은 자신만의 스트릿 하나를 갖는 것이다. — 세 칸을 채우며, 나를 부르는 이름을 스스로 지어 봅니다.</div>
+    </div>
+    <div class="wb-meta">
+      1기 모임 · 2026.11.19<br>
+      urbanbeyond — OWN STREET
+      <div class="name-line">이름 <span class="fill-blank">&nbsp;</span></div>
+    </div>
+  </div>
+
+  <div class="wb-intro">
+    옛 선비들은 자기 집 마당의 나무 한 그루, 좋아하는 계절 하나를 그대로 호(號)로 썼습니다.
+    잘 지으려 애쓰지 않아도 됩니다. <b>정답은 없습니다</b> — AI 는 옆에서 단어를 다듬는 것을 도울 뿐,
+    마지막 이름은 내가 직접 고르고 씁니다.
+  </div>
+
+  <div class="wb-steps">
+
+    <!-- STEP 1 -->
+    <div class="step">
+      <div class="step-head">
+        <span class="step-num">01</span>
+        <span class="step-title">나를 설명하는<br>단어 세 개</span>
+      </div>
+      <div class="step-body">
+        <div class="step-q">아래 질문에 떠오르는 대로, 짧게 적어 보세요.</div>
+
+        <div class="step-help">요즘 자주 입는 옷이나 자주 가는 동네를 한 단어로 말하면?</div>
+        <div class="fill"></div>
+
+        <div class="step-help" style="margin-top:3mm;">오늘 하루 중 가장 &lsquo;나답다&rsquo;고 느낀 순간은 언제였나요? 그 순간을 한 단어로 하면?</div>
+        <div class="fill"></div>
+
+        <div class="step-help" style="margin-top:3mm;">절대 닮고 싶지 않은 모습은 무엇인가요? (반대로 뒤집으면 내가 원하는 모습이 보일 수 있어요)</div>
+        <div class="fill"></div>
+
+        <div class="step-spacer"></div>
+        <div class="step-help" style="margin-top:3mm; font-weight:700; color:var(--foreground);">
+          위 세 답변 중 가장 마음에 남는 단어 세 개를 아래에 옮겨 적어 보세요.
+        </div>
+        <div class="fill-row"><span class="fill-tag">1</span><div class="fill"></div></div>
+        <div class="fill-row"><span class="fill-tag">2</span><div class="fill"></div></div>
+        <div class="fill-row"><span class="fill-tag">3</span><div class="fill"></div></div>
+      </div>
+    </div>
+
+    <!-- STEP 2 -->
+    <div class="step">
+      <div class="step-head">
+        <span class="step-num">02</span>
+        <span class="step-title">소리 나는<br>이름으로</span>
+      </div>
+      <div class="step-body">
+        <div class="step-q">①에서 고른 단어 중 하나를 그대로 써도 좋고, 소리가 좋게 두 글자나 세 글자로 다듬어도 좋습니다.</div>
+        <div class="step-help quote">꾸미지 않아도 됩니다 — 선비들도 자기 집 마당의 나무 한 그루, 좋아하는 계절 하나를 그대로 호로 썼습니다.</div>
+
+        <div class="name-box"></div>
+
+        <div class="step-help">소리 내어 읽어 보세요. 입에 붙나요? 마음에 들지 않으면 지우고 다시 써도 됩니다 — 옆 사람과 바꿔 불러 봐도 좋습니다.</div>
+
+        <div class="hint-slot">
+          <b>힌트 단어장 자리</b>
+          이 자리는 비워 둡니다 — 신 브랜더가 2026-11-15 에 치환 사전에서 추린 단어 15~20개를 채웁니다.
+          참고용일 뿐, 꼭 여기서 골라야 하는 건 아닙니다.
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 3 -->
+    <div class="step">
+      <div class="step-head">
+        <span class="step-num">03</span>
+        <span class="step-title">그 이름의<br>뜻 한 줄</span>
+      </div>
+      <div class="step-body">
+        <div class="step-q">이 이름을 왜 지었나요? 한 줄로 적어주세요.</div>
+        <div class="step-help">정답은 없습니다. ①에서 적은 단어가 왜 나를 설명하는지를 그대로 풀어 적으면 됩니다.</div>
+
+        <div class="meaning-lines" style="margin-top:3mm;">
+          <div class="fill"></div>
+          <div class="fill" style="margin-top:1.8mm;"></div>
+          <div class="fill" style="margin-top:1.8mm;"></div>
+        </div>
+
+        <div class="step-spacer"></div>
+
+        <div class="step-help" style="font-weight:700; color:var(--foreground); margin-bottom:2mm;">
+          오늘, 이 이름으로 한번 불려 보세요.
+        </div>
+        <div class="step-help">모임이 끝나면, 이 종이가 당신의 첫 스트릿입니다.</div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="wb-footer">
+    <span>이 워크북은 1기 모임 참가자가 직접 손으로 채우는 종이입니다. 적은 내용은 외부에 공개되지 않습니다.</span>
+    <span class="brand">OWN<span class="accent">·</span>STREET</span>
+  </div>
+
+</div>
+
+<div class="print-note">인쇄: Ctrl/Cmd + P → 용지 A4, 배율 100%, 여백 &ldquo;없음&rdquo;(또는 기본) 권장</div>
+
+</body>
+</html>
