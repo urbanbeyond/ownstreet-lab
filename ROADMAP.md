@@ -151,3 +151,5 @@ Claude·ChatGPT 메인 영역 같은 구조(위에서 아래로 흐르는 대화
 | 26 | 11-15 (일) | brand-feature-developer | 힌트 단어장(치환 사전에서 15~20개 추려 인쇄용으로) 완성 + `docs/naming-rules.md` 4·5·3-2절을 "자호용"으로 다시 쓰기(세 축 무게중심 이동, 접미어 제거, 가치어 사전 확대) | 없음 |
 
 이번 주는 **코드·화면 작업이 없다** — 세 사람 모두 동의, 1기 모임 준비물(워크북)에 집중한다.
+
+**11-15 (#26) 실행**: brand-feature-developer 가 힌트 단어장(`docs/workshop/jaho-workbook.html` 의 `.hint-slot`) 완성 + `docs/naming-rules.md` 4·5·3-2절 "자호용" 재작성을 오늘 맡았다. 결정 전문: `daily/2026-11-15/pm_decision.md`.
