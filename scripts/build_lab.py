@@ -43,8 +43,8 @@ PREVIEW_BANNER = (
     '<div id="lab-banner" style="position:sticky;top:0;z-index:2147483647;'
     "background:#13161B;color:#F6F3ED;font:600 13px/1.4 -apple-system,system-ui,sans-serif;"
     'padding:9px 14px;text-align:center;border-bottom:3px solid #F85003">'
-    '<b style="color:#F85003;letter-spacing:.08em">LAB 미리보기</b> · AI 팀이 만든 최신 화면이에요. '
-    "로그인·접수는 연결돼 있지 않아 실제 주문은 되지 않아요.</div>"
+    '<b style="color:#F85003;letter-spacing:.08em">LAB</b> · AI 팀이 만들고 있는 실험 버전이에요. '
+    "실제 주문·결제는 되지 않아요.</div>"
 )
 PREVIEW_FLAG = "\n;(window.OWN_STREET_CONFIG = window.OWN_STREET_CONFIG || {}).labPreview = true; // LAB 미리보기 빌드\n"
 NOINDEX = '<meta name="robots" content="noindex,nofollow">'

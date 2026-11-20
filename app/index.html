@@ -3,127 +3,120 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>OWN STREET — YOUR IMAGE. YOUR STREET.</title>
-  <meta name="description" content="한국 커스텀 티셔츠 서비스. 생성한 이미지의 URL을 보내주세요. 나머지는 우리가 준비합니다.">
+  <title>내가브랜드 — OWN STREET</title>
+  <meta name="description" content="단어 하나로 시작해, 소중한 사람에게 선물할 티셔츠 로고까지. 3분이면 돼.">
   <meta name="theme-color" content="#F6F3ED">
-  <meta property="og:title" content="OWN STREET — YOUR IMAGE. YOUR STREET.">
-  <meta property="og:description" content="한국 커스텀 티셔츠 서비스. 생성한 이미지의 URL을 보내주세요. 나머지는 우리가 준비합니다.">
+  <meta property="og:title" content="내가브랜드 — OWN STREET">
+  <meta property="og:description" content="단어 하나로 시작해, 소중한 사람에게 선물할 티셔츠 로고까지. 3분이면 돼.">
   <meta property="og:type" content="website">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%2313161B'/%3E%3Crect x='20' y='20' width='24' height='24' fill='%23F85003'/%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@600;800;900&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&display=swap">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 <div class="page">
 
-  <!-- 상단 바: 로고 + 로그인 상태 + 진행 표시(얇은 막대, 숫자 없음) -->
-  <header class="topbar-wrap" id="top">
-    <div class="topbar">
-      <span class="font-display topbar-brand">OWN STREET</span>
-      <span class="font-display topbar-tag" id="topTag">KR / CUSTOM TEE</span>
-      <div class="user-chip" id="userChip" hidden>
-        <span class="chip-avatar"><img id="avatarImg" alt="" referrerpolicy="no-referrer" hidden><span id="avatarInitial" class="font-display"></span></span>
-        <span class="chip-name" id="userName"></span>
-        <button type="button" class="font-display chip-logout" id="logoutBtn">LOGOUT</button>
-      </div>
-    </div>
-    <!-- 숫자(3/8) 대신 막대 채움으로 "얼마나 왔는지"만 암시. 접수 전까지만 보인다 -->
-    <div class="topbar-progress" id="topProgress" role="progressbar" aria-label="주문 진행" aria-valuemin="0" aria-valuemax="100" style="--progress: 0" hidden></div>
+  <header class="topbar">
+    <span class="font-display topbar-brand">OWN STREET</span>
+    <span class="font-display topbar-tag">NAEGA BRAND</span>
   </header>
 
-  <!-- 대화형 주문 -->
-  <section class="section chat-section" id="request" aria-labelledby="requestTitle">
-    <h1 class="sr-only" id="requestTitle">OWN STREET 주문 대화</h1>
-    <div class="chat" id="chat">
-      <ol class="chat-log" id="chatLog" role="log" aria-live="polite" aria-label="주문 대화"></ol>
-      <div class="chat-input" id="chatInput"></div>
-      <button type="button" class="link chat-reset" id="chatReset" hidden>처음부터 다시</button>
+  <section class="hero">
+    <p class="font-display hero-kicker">MY WORD. MY BRAND.</p>
+    <h1 class="hero-title">내가브랜드</h1>
+    <p class="hero-sub">단어 하나로 시작해, 소중한 사람에게 선물할 티셔츠 로고까지. 3분이면 돼.</p>
+  </section>
+
+  <!-- 01 단어 -->
+  <section class="step" id="step1" data-step="1">
+    <div class="step-label"><span class="font-display step-num">01</span><h2 class="step-title">지금 떠오른 단어 1개</h2></div>
+    <p class="step-help">아무거나 괜찮아. 사람, 물건, 기분, 장소 — 지금 머리에 떠오른 거 하나.</p>
+    <div class="field">
+      <input id="wordInput" class="text-input" type="text" maxlength="12" placeholder="예: 다정" autocomplete="off" enterkeyhint="next">
+      <button type="button" class="btn btn-ink" id="wordNext">다음</button>
+    </div>
+    <div class="chips" id="wordChips" aria-label="예시 단어"></div>
+    <div class="example">
+      <span class="example-tag">의장 예시</span>
+      <span>의장은 <b>"다정"</b>으로 시작했어. 친구들이 자주 하는 말이래.</span>
+    </div>
+    <button type="button" class="link" id="stuckBtn">막혔어? 질문 하나 던져 줄게</button>
+    <div class="clue" id="clueBox" hidden>
+      <p class="clue-q" id="clueQ"></p>
+      <p class="clue-a" id="clueA"></p>
+      <button type="button" class="link" id="clueNext">다른 질문</button>
     </div>
   </section>
 
-  <!-- PRODUCT / CUSTOM INFO -->
-  <section class="section info" aria-labelledby="infoTitle">
-    <div class="section-label">
-      <span class="font-display section-num">01</span>
-      <h2 class="font-display section-title" id="infoTitle">PRODUCT / CUSTOM INFO</h2>
-    </div>
-
-    <div class="accordion">
-      <details>
-        <summary><span class="font-display acc-title">SIZE</span><span class="font-display acc-sign" aria-hidden="true">+</span></summary>
-        <div class="acc-body">
-          <div class="size-chips" id="sizeChips"></div>
-          <div class="table-scroll"><table class="size-table" id="sizeTable"></table></div>
-          <p class="acc-note" id="sizeNote"></p>
-        </div>
-      </details>
-
-      <details>
-        <summary><span class="font-display acc-title">QUALITY</span><span class="font-display acc-sign" aria-hidden="true">+</span></summary>
-        <div class="acc-body"><ul class="bullets" id="qualityList"></ul></div>
-      </details>
-
-      <details>
-        <summary><span class="font-display acc-title">CARE</span><span class="font-display acc-sign" aria-hidden="true">+</span></summary>
-        <div class="acc-body"><ul class="bullets" id="careList"></ul></div>
-      </details>
-
-      <details>
-        <summary><span class="font-display acc-title">CUSTOM GUIDE</span><span class="font-display acc-sign" aria-hidden="true">+</span></summary>
-        <div class="acc-body"><ul class="bullets" id="guideList"></ul></div>
-      </details>
-
-      <details>
-        <summary><span class="font-display acc-title">COPYRIGHT / NOTICE</span><span class="font-display acc-sign" aria-hidden="true">+</span></summary>
-        <div class="acc-body"><ul class="bullets" id="noticeList"></ul></div>
-      </details>
-    </div>
+  <!-- 02 선물 + 색 -->
+  <section class="step" id="step2" data-step="2" hidden>
+    <div class="step-label"><span class="font-display step-num">02</span><h2 class="step-title">누구에게 선물할까</h2></div>
+    <p class="step-help">티셔츠나 맨투맨에 들어갈 <b id="wordEcho"></b> 로고를 만든다고 생각해 봐. 소중한 사람에게 선물한다면, 누구야?</p>
+    <div class="chips chips-lg" id="personChips" role="radiogroup" aria-label="선물할 사람"></div>
+    <input id="personInput" class="text-input" type="text" maxlength="12" placeholder="직접 쓰기 (예: 동생)" hidden>
+    <h3 class="sub-title">떠오른 색 하나</h3>
+    <div class="swatches" id="colorChips" role="radiogroup" aria-label="색"></div>
+    <button type="button" class="btn btn-ink btn-block" id="giftNext" disabled>이름 보러 가기</button>
   </section>
 
-  <!-- FOOTER -->
+  <!-- 03 이름 -->
+  <section class="step" id="step3" data-step="3" hidden>
+    <div class="step-label"><span class="font-display step-num">03</span><h2 class="step-title">브랜드 이름</h2></div>
+    <p class="step-help">네 단어로 만든 후보야. 하나 고르고, 마음대로 고쳐도 돼.</p>
+    <div class="names" id="nameList" role="radiogroup" aria-label="이름 후보"></div>
+    <label class="field-label" for="nameInput">최종 이름</label>
+    <input id="nameInput" class="text-input" type="text" maxlength="20" autocomplete="off">
+    <button type="button" class="btn btn-ink btn-block" id="nameNext" disabled>로고 만들기</button>
+  </section>
+
+  <!-- 04 로고 -->
+  <section class="step" id="step4" data-step="4" hidden>
+    <div class="step-label"><span class="font-display step-num">04</span><h2 class="step-title">로고</h2></div>
+    <div class="tabs" id="styleTabs" role="tablist" aria-label="로고 스타일"></div>
+    <div class="logo-stage">
+      <canvas id="logoCanvas" width="1000" height="1000" aria-label="로고 미리보기"></canvas>
+    </div>
+    <div class="tee">
+      <img src="assets/tee.svg" alt="티셔츠에 올린 모습" class="tee-img" width="581" height="534">
+      <img id="teeLogo" class="tee-logo" alt="">
+    </div>
+    <details class="ai-more">
+      <summary>내 AI로 이미지 더 만들어 보기</summary>
+      <p class="step-help">아래 글을 복사해서 내 ChatGPT나 Gemini에 붙여넣어. 네 계정에서 만들어지고, 우리 쪽으로는 아무것도 안 와.</p>
+      <textarea id="aiPrompt" class="prompt" readonly rows="7"></textarea>
+      <div class="row">
+        <button type="button" class="btn btn-ink" id="copyPrompt">복사하기</button>
+        <a class="btn btn-line" href="https://chatgpt.com/" target="_blank" rel="noopener">ChatGPT 열기</a>
+        <a class="btn btn-line" href="https://gemini.google.com/app" target="_blank" rel="noopener">Gemini 열기</a>
+      </div>
+    </details>
+    <button type="button" class="btn btn-signal btn-block" id="logoNext">자랑 카드 만들기</button>
+  </section>
+
+  <!-- 05 공유 -->
+  <section class="step" id="step5" data-step="5" hidden>
+    <div class="step-label"><span class="font-display step-num">05</span><h2 class="step-title">내가 만든 브랜드 어때?</h2></div>
+    <img id="cardImg" class="card-img" alt="내가브랜드 카드">
+    <div class="row">
+      <button type="button" class="btn btn-signal" id="shareBtn">공유하기</button>
+      <a class="btn btn-ink" id="downloadBtn" download="naegabrand.png">이미지 저장</a>
+    </div>
+    <button type="button" class="link" id="restartBtn">다른 단어로 하나 더</button>
+  </section>
+
   <footer class="footer">
-    <nav class="font-display footer-links" aria-label="안내">
-      <button type="button" data-open="privacyDialog">Privacy</button>
-      <button type="button" data-open="termsDialog">Terms</button>
-      <a id="contactLink" href="https://pf.kakao.com/_nxaEJG/chat" target="_blank" rel="noopener">Contact</a>
+    <p class="footer-note">입력한 내용은 이 기기에만 저장돼. 서버로 보내지 않아.</p>
+    <nav class="font-display footer-links">
+      <a href="https://pf.kakao.com/_nxaEJG/chat" target="_blank" rel="noopener">CONTACT</a>
+      <a href="https://www.instagram.com/urbanbeyond.kr/" target="_blank" rel="noopener">INSTAGRAM</a>
     </nav>
-    <div class="font-display footer-copy">© 2026 OWN STREET</div>
+    <div class="font-display footer-copy">© 2026 OWN STREET · urbanbeyond</div>
   </footer>
 </div>
-
-<!-- 사이즈표 (대화 중에 열림) -->
-<dialog id="sizeDialog" class="modal modal-doc" aria-labelledby="sizeDialogTitle">
-  <h2 class="font-display modal-title" id="sizeDialogTitle">SIZE</h2>
-  <div class="table-scroll"><table class="size-table" id="sizeTableDialog"></table></div>
-  <p class="acc-note" id="sizeNoteDialog"></p>
-  <div class="modal-actions"><button type="button" class="btn-modal btn-modal-ink" data-close>닫기</button></div>
-</dialog>
-
-<!-- 개인정보 -->
-<dialog id="privacyDialog" class="modal modal-doc" aria-labelledby="privacyTitle">
-  <h2 class="font-display modal-title" id="privacyTitle">PRIVACY</h2>
-  <p class="modal-sub">개인정보 수집 및 이용 안내</p>
-  <ul class="bullets">
-    <li>수집 항목: 신청자명(입금자명), 전화번호, 배송 주소, 이미지 URL, Google 계정 이메일</li>
-    <li>이용 목적: 커스텀 제작 요청 확인, 고객 연락, 제작 관련 안내, 배송</li>
-    <li>보유 기간: <span id="retentionText"></span></li>
-  </ul>
-  <p class="modal-text small">개인정보 수집 및 이용에 동의하지 않을 수 있습니다. 다만 동의하지 않으면 제작 요청을 보낼 수 없습니다.</p>
-  <div class="modal-actions"><button type="button" class="btn-modal btn-modal-ink" data-close>닫기</button></div>
-</dialog>
-
-<!-- 이용 안내 -->
-<dialog id="termsDialog" class="modal modal-doc" aria-labelledby="termsTitle">
-  <h2 class="font-display modal-title" id="termsTitle">TERMS</h2>
-  <ul class="bullets" id="termsList"></ul>
-  <div class="modal-actions"><button type="button" class="btn-modal btn-modal-ink" data-close>닫기</button></div>
-</dialog>
-
-
-<script src="config.js"></script>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 <script type="module" src="app.js"></script>
 </body>
 </html>
