@@ -65,10 +65,21 @@
   <!-- 03 이름 -->
   <section class="step" id="step3" data-step="3" hidden>
     <div class="step-label"><span class="font-display step-num">03</span><h2 class="step-title">브랜드 이름</h2></div>
-    <p class="step-help">네 단어가 곧 이름이야. 한글이든 영문이든 고르고, 원하는 대로 바꿔 써.</p>
-    <div class="names" id="nameList" role="radiogroup" aria-label="이름 표기"></div>
+    <p class="step-help" id="nameHelp"><b id="nameWord"></b>을(를) 그대로 쓰지 않고, 같은 결의 다른 말로 지어 봤어. 하나 고르고 마음대로 고쳐 써.</p>
+    <div class="names" id="nameList" role="radiogroup" aria-label="이름 예시"></div>
+    <div class="clue" id="nameMissing" hidden>
+      <p class="clue-q">이 단어는 아직 우리 이름 사전에 없어.</p>
+      <p class="clue-a">내 ChatGPT나 Gemini에 물어볼 글을 준비했어. 복사해서 붙여넣고, 마음에 드는 이름을 아래에 적어 줘.</p>
+      <textarea id="namePrompt" class="prompt" readonly rows="6"></textarea>
+      <div class="row">
+        <button type="button" class="btn btn-ink" id="copyNamePrompt">복사하기</button>
+        <a class="btn btn-line" href="https://chatgpt.com/" target="_blank" rel="noopener">ChatGPT 열기</a>
+        <a class="btn btn-line" href="https://gemini.google.com/app" target="_blank" rel="noopener">Gemini 열기</a>
+      </div>
+    </div>
     <label class="field-label" for="nameInput">최종 이름</label>
-    <input id="nameInput" class="text-input" type="text" maxlength="20" autocomplete="off">
+    <input id="nameInput" class="text-input" type="text" maxlength="20" autocomplete="off" placeholder="고르거나 직접 적기">
+    <button type="button" class="link" id="useWord">내 단어 그대로 쓸래</button>
     <button type="button" class="btn btn-ink btn-block" id="nameNext" disabled>로고 만들기</button>
   </section>
 

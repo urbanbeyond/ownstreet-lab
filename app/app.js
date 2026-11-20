@@ -1,6 +1,8 @@
 // 내가브랜드 — 단어 1개 → 선물할 사람·색 → 이름 → 로고 → 공유 카드
 // 원천 기획: docs/strategy/02_내가브랜드_기획.md (R-034~R-038). 서버·유료 API 없음. 결과는 이 기기에만 저장.
 
+import { namingIdeas } from "./naming-words.js";
+
 const $ = (id) => document.getElementById(id);
 const STORE_KEY = "naegabrand:v1";
 
@@ -172,22 +174,30 @@ function personKo() { const p = PERSONS[state.person]; return p.custom ? state.p
 function personEn() { const p = PERSONS[state.person]; return p.custom ? latinOf(state.personText) : p.en; }
 
 // ---------- 03 이름 ----------
+// R-041: 단어를 그대로 쓰지 않고, 같은 결의 격 있는 다른 말로 이름 예시를 보여 준다 (app/naming-words.js).
+// 사전에 없는 단어면 내 AI 에게 물어볼 글을 준비한다. 흔한 꼬리말·숫자 붙이기는 하지 않는다(R-040).
 function candidates() {
+  return namingIdeas(state.word).map(([n, lang, gloss]) => [n, `${lang} · ${gloss}`]);
+}
+function namePrompt() {
   const w = state.word.trim();
-  const lat = latinOf(w);
-  // R-040: 꼬리말·색·숫자를 붙인 자동 후보는 쓰지 않는다 (의장: "너무 촌스러워"). 네 단어의 표기만 보여 준다.
-  const list = [
-    [w, hasHangul(w) ? "한글 그대로" : "쓴 그대로"],
-    [lat, hasHangul(w) ? "영문으로" : "대문자로"],
-  ];
-  const seen = new Set();
-  return list.filter(([n]) => (seen.has(n) ? false : (seen.add(n), true)));
+  return [
+    `"${w}"라는 단어에서 출발해서 티셔츠·맨투맨 로고에 들어갈 브랜드 이름을 5개 지어 줘.`,
+    `- "${w}"를 그대로 쓰지 말고, 뜻이나 느낌이 통하는 격 있는 다른 단어(영어·라틴어·프랑스어·이탈리아어·한자어 등)로.`,
+    "- 이름마다 어느 나라 말인지와 뜻을 한 줄로 알려 줘.",
+    "- CLUB, STUDIO 같은 꼬리말이나 숫자는 붙이지 마.",
+    `- ${personKo()}에게 선물할 로고야.`,
+  ].join("\n");
 }
 function renderStep3() {
+  const w = state.word.trim();
+  $("nameWord").textContent = `"${w}"`;
   const box = $("nameList");
   box.textContent = "";
   const list = candidates();
-  if (!state.name) state.name = list[1] ? list[1][0] : list[0][0];
+  $("nameMissing").hidden = list.length > 0;
+  $("nameHelp").hidden = list.length === 0;
+  $("namePrompt").value = namePrompt();
   list.forEach(([n, why]) => {
     const b = document.createElement("button");
     b.type = "button";
@@ -424,6 +434,13 @@ function init() {
   });
   $("nameNext").addEventListener("click", async () => { show(4); await renderStep4(); });
   $("logoNext").addEventListener("click", async () => { show(5); await renderStep5(); });
+  $("useWord").addEventListener("click", () => {
+    state.name = state.word.trim(); save(); renderStep3(); $("nameInput").focus();
+  });
+  $("copyNamePrompt").addEventListener("click", async () => {
+    try { await navigator.clipboard.writeText($("namePrompt").value); toast("복사했어. 내 AI에 붙여넣어 봐"); }
+    catch (_) { $("namePrompt").select(); toast("글을 길게 눌러 복사해 줘"); }
+  });
   $("copyPrompt").addEventListener("click", async () => {
     try { await navigator.clipboard.writeText($("aiPrompt").value); toast("복사했어. 내 AI에 붙여넣어 봐"); }
     catch (_) { $("aiPrompt").select(); toast("글을 길게 눌러 복사해 줘"); }
