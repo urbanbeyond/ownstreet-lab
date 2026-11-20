@@ -175,14 +175,10 @@ function personEn() { const p = PERSONS[state.person]; return p.custom ? latinOf
 function candidates() {
   const w = state.word.trim();
   const lat = latinOf(w);
-  const p = PERSONS[state.person];
-  const colorEn = COLORS[state.color][1];
+  // R-040: 꼬리말·색·숫자를 붙인 자동 후보는 쓰지 않는다 (의장: "너무 촌스러워"). 네 단어의 표기만 보여 준다.
   const list = [
-    [w, "단어 그대로"],
-    [lat, "영문으로"],
-    [`${lat} ${p.suffix}`, `${personKo()}에게`],
-    [`${colorEn} ${lat}`, `${COLORS[state.color][0]}으로`],
-    [`${lat} 01`, "첫 번째 판"],
+    [w, hasHangul(w) ? "한글 그대로" : "쓴 그대로"],
+    [lat, hasHangul(w) ? "영문으로" : "대문자로"],
   ];
   const seen = new Set();
   return list.filter(([n]) => (seen.has(n) ? false : (seen.add(n), true)));
