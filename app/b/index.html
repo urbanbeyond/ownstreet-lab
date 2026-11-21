@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>내가브랜드 — 내 로고</title>
+  <meta name="description" content="대화로 만든 내 브랜드 로고. 티셔츠에 올려 보고, 자랑 카드로 저장해.">
+  <meta name="theme-color" content="#F6F3ED">
+  <meta name="robots" content="noindex">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%2313161B'/%3E%3Crect x='20' y='20' width='24' height='24' fill='%23F85003'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&display=swap">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+  <link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+<div class="page">
+  <header class="topbar">
+    <a href="../" class="font-display topbar-brand" style="color:inherit;text-decoration:none">OWN STREET</a>
+    <span class="font-display topbar-tag">NAEGA BRAND</span>
+  </header>
+
+  <section class="hero">
+    <p class="font-display hero-kicker">MY WORD. MY BRAND.</p>
+    <h1 class="hero-title" id="brandName">내가브랜드</h1>
+    <p class="hero-sub" id="brandLine"></p>
+  </section>
+
+  <section class="step" id="empty" hidden>
+    <div class="step-label"><span class="font-display step-num">!</span><h2 class="step-title">브랜드 정보가 없어</h2></div>
+    <p class="step-help">이 페이지는 내 AI와 대화로 만든 브랜드를 보여 주는 곳이야. 처음부터 해 보려면 아래로.</p>
+    <div class="row">
+      <a class="btn btn-ink" href="../">웹에서 바로 만들기</a>
+      <a class="btn btn-line" href="../connect/">내 AI로 대화하며 만들기</a>
+    </div>
+  </section>
+
+  <section class="step" id="logoStep" hidden>
+    <div class="step-label"><span class="font-display step-num">01</span><h2 class="step-title">로고</h2></div>
+    <div class="tabs" id="styleTabs" role="tablist" aria-label="로고 스타일"></div>
+    <div class="logo-stage"><canvas id="logoCanvas" width="1000" height="1000" aria-label="로고"></canvas></div>
+    <div class="tee">
+      <img src="../assets/tee.svg" alt="티셔츠에 올린 모습" class="tee-img" width="581" height="534">
+      <img id="teeLogo" class="tee-logo" alt="">
+    </div>
+    <button type="button" class="btn btn-signal btn-block" id="cardBtn">자랑 카드 만들기</button>
+  </section>
+
+  <section class="step" id="cardStep" hidden>
+    <div class="step-label"><span class="font-display step-num">02</span><h2 class="step-title">내가 만든 브랜드 어때?</h2></div>
+    <img id="cardImg" class="card-img" alt="내가브랜드 카드">
+    <div class="row">
+      <button type="button" class="btn btn-signal" id="shareBtn">공유하기</button>
+      <a class="btn btn-ink" id="downloadBtn" download="naegabrand.png">이미지 저장</a>
+    </div>
+    <a class="link" href="../" style="display:inline-block">다른 단어로 하나 더</a>
+  </section>
+
+  <footer class="footer">
+    <p class="footer-note">이 페이지는 주소에 담긴 내용으로만 그려. 서버에 저장하지 않아.</p>
+    <nav class="font-display footer-links">
+      <a href="https://pf.kakao.com/_nxaEJG/chat" target="_blank" rel="noopener">CONTACT</a>
+      <a href="https://www.instagram.com/urbanbeyond.kr/" target="_blank" rel="noopener">INSTAGRAM</a>
+    </nav>
+    <div class="font-display footer-copy">© 2026 OWN STREET · urbanbeyond</div>
+  </footer>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+<script type="module" src="b.js"></script>
+</body>
+</html>

@@ -103,6 +103,7 @@ OWN STREET 는 **의장 1명과 AI 팀원 5명**으로 이루어진 스타트업
 ## 폴더 규칙
 - `app/` — 서비스 프론트엔드 (LAB 으로 자동 배포, LIVE 는 의장 승인)
 - `backend/` — Apps Script 코드 (배포는 의장)
+- `netlify/functions/mcp.mjs` — 내가브랜드 내 AI 커넥터(MCP, R-042). LAB 배포 때 함께 올라간다. 도구 이름·주소(/mcp)를 바꾸면 연결한 사용자가 끊기니 바꾸지 않는다
 - `daily/YYYY-MM-DD/` — `pm_decision.md`, `work_summary.md`, `team_note.md`(마케터의 분위기 메모), `post.json`(개발 기록, 저장용), `hero.jpg`, `screen.png`, `publish.json`(그날 발행할 소설 묶음), `published.json`
 - `meetings/YYYY-MM-DD/` — 화요일 회의: 팀원별 의견 파일, `minutes.md`(마케터가 쓰는 회의록)
 - `records/YYYY-MM-DD/` — 저장소 밖 기록의 요약 (`notes.md`). 없을 수 있다

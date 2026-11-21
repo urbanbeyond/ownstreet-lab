@@ -163,7 +163,7 @@ jobs:
         run: |
           if [ "${{ steps.lab.outcome }}" != "success" ]; then echo "result=no-build" >> "$GITHUB_OUTPUT"; echo "LAB 빌드 없음 — 배포 안 함"; exit 0; fi
           if [ -z "$NETLIFY_AUTH_TOKEN" ] || [ -z "$NETLIFY_LAB_SITE_ID" ]; then echo "result=skipped" >> "$GITHUB_OUTPUT"; echo "Netlify 설정 없음 — LAB 배포 건너뜀"; exit 0; fi
-          if npx -y netlify-cli@latest deploy --dir=build/lab --prod \
+          if npx -y netlify-cli@latest deploy --dir=build/lab --functions=netlify/functions --prod \
                --site="$NETLIFY_LAB_SITE_ID" --auth="$NETLIFY_AUTH_TOKEN" \
                --message="LAB ${{ steps.today.outputs.date }}"; then
             echo "result=deployed" >> "$GITHUB_OUTPUT"

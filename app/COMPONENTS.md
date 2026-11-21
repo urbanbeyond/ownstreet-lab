@@ -12,3 +12,12 @@
   - 막힐 때 단서 질문: 의장의 실제 답을 예시로 보여 줌(`docs/naegabrand/example-chair.md`).
 - `styles.css` — 디자인 시스템(오프화이트·잉크·시그널 오렌지, Anton, 2px 테두리 + 4px 하드 그림자).
 - `config.js`, `kakaopay-qr.svg`, `vendor/` — 지금 화면은 쓰지 않지만 규칙상 손대지 않고 둔다.
+
+## 내 AI 커넥터 (R-042, 2026-11-21)
+- `../netlify/functions/mcp.mjs` — MCP 커넥터 `https://ownstreet.team/mcp` (Netlify Functions, 로그인·저장·유료 API 없음). 사용자가 자기 ChatGPT·Claude 커스텀 커넥터에 넣으면 대화는 사용자 AI 가, 이 서버는 도구 3개만:
+  - `naegabrand_start` 진행 안내(단어 1개 → 선물할 사람 → 색 → 격 있는 다른 말로 이름 → 로고), `naegabrand_name_words` 이름 사전, `naegabrand_make_logo` 결과 링크.
+  - 사용 횟수는 함수 로그에 도구 이름만 남는다(개인정보 없음).
+- `b/` — 결과 페이지. `?n=이름&c=색&t=선물할 사람&w=단어&s=bold|badge|tag` 로 로고·티셔츠·자랑 카드를 그린다. 서버 저장 없음.
+- `connect/` — 연결 방법 안내(주소 복사 → 내 AI 에 넣기 → "내가브랜드로 내 브랜드 만들어 줘").
+- `brand-render.js` — 로고·카드 그리기 공용 모듈(웹 화면과 결과 페이지가 같이 쓴다).
+- 배포: LAB 배포 명령에 `--functions=netlify/functions` 가 있어야 커넥터가 살아 있다 (lab-deploy.yml, daily-cycle.yml). LIVE(promote-live)에는 넣지 않았다.

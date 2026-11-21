@@ -30,6 +30,8 @@ body {
 .hero-kicker { margin: 0 0 4px; font-size: 15px; color: var(--signal); }
 .hero-title { margin: 0; font-size: 56px; line-height: 1.05; font-weight: 900; letter-spacing: -.02em; }
 .hero-sub { margin: 12px 0 0; font-size: 17px; color: var(--muted); }
+.hero-ai { margin-top: 16px; white-space: normal; text-align: left; }
+.step-help a { color: var(--ink); }
 
 .step { scroll-margin-top: 72px; margin-top: 28px; padding: 20px 18px 22px; background: #fff; border: var(--line); box-shadow: var(--shadow); }
 .step-label { display: flex; align-items: baseline; gap: 10px; }
