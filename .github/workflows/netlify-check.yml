@@ -25,5 +25,9 @@ jobs:
           echo "== 계정(팀) 조회 =="
           curl -s -o a.json -w "HTTP %{http_code}\n" -H "Authorization: Bearer $T" https://api.netlify.com/api/v1/accounts
           jq -r '.[] | {slug, type_name, billing_period, roles_allowed, enforce_saml, capabilities: (.capabilities // {} | with_entries(.value |= (if type=="object" then (.used|tostring)+"/"+(.included|tostring) else . end)))}' a.json 2>/dev/null || head -c 500 a.json
+          echo "== 크레딧 원본 =="
+          jq -c '.[] | .capabilities.credits' a.json
+          echo "== 이번 달 배포 수 (LAB) =="
+          curl -s -H "Authorization: Bearer $T" "https://api.netlify.com/api/v1/sites/$S/deploys?per_page=100" | jq -r '[.[] | select(.created_at >= "2026-11-01")] | "11월 배포 \(length)건, ready \([.[]|select(.state=="ready")]|length)건"'
           echo "== 최근 배포 3개 =="
           curl -s -H "Authorization: Bearer $T" "https://api.netlify.com/api/v1/sites/$S/deploys?per_page=3" | jq -r '.[] | {created_at, state, error_message, title}' 2>/dev/null
