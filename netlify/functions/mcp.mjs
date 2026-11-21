@@ -6,7 +6,9 @@ import { namingIdeas } from "../../app/naming-words.js";
 
 export const config = { path: "/mcp" };
 
-const SITE = "https://ownstreet.team";
+// 로고 링크는 요청이 들어온 주소 기준 (ownstreet.team, 시험용 별칭 주소 모두 맞게). 알 수 없으면 ownstreet.team
+const DEFAULT_SITE = "https://ownstreet.team";
+const siteOf = (req) => { try { const u = new URL(req.url); return /^https?:$/.test(u.protocol) ? u.origin : DEFAULT_SITE; } catch (_) { return DEFAULT_SITE; } };
 const SUPPORTED = ["2025-11-25", "2025-06-18", "2025-03-26", "2024-11-05"];
 const SERVER_INFO = { name: "naegabrand", title: "내가브랜드", version: "1.0.0" };
 
@@ -75,7 +77,7 @@ const TOOLS = [
 
 const clip = (v, n) => (typeof v === "string" ? v.trim().slice(0, n) : "");
 
-function callTool(name, args = {}) {
+function callTool(name, args = {}, SITE = DEFAULT_SITE) {
   if (name === "naegabrand_start") {
     return { content: [{ type: "text", text: GUIDE }] };
   }
@@ -114,7 +116,7 @@ function callTool(name, args = {}) {
   return null;
 }
 
-function handle(msg) {
+function handle(msg, site) {
   const { id, method, params } = msg || {};
   const isNotification = id === undefined || id === null;
   const ok = (result) => ({ jsonrpc: "2.0", id, result });
@@ -140,7 +142,7 @@ function handle(msg) {
     case "tools/call": {
       const name = params && params.name;
       console.log(JSON.stringify({ evt: "tool", name }));
-      const res = callTool(name, (params && params.arguments) || {});
+      const res = callTool(name, (params && params.arguments) || {}, site);
       return res ? ok(res) : err(-32602, `Unknown tool: ${name}`);
     }
     case "resources/list":
@@ -172,7 +174,8 @@ export default async (req) => {
       status: 400, headers: { ...CORS, "Content-Type": "application/json" },
     });
   }
-  const out = Array.isArray(body) ? body.map(handle).filter(Boolean) : handle(body);
+  const site = siteOf(req);
+  const out = Array.isArray(body) ? body.map((m) => handle(m, site)).filter(Boolean) : handle(body, site);
   if (!out || (Array.isArray(out) && out.length === 0)) return new Response(null, { status: 202, headers: CORS });
   return new Response(JSON.stringify(out), { status: 200, headers: { ...CORS, "Content-Type": "application/json" } });
 };

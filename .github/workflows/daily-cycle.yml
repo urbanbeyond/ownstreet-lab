@@ -86,7 +86,7 @@ jobs:
         if: steps.pause.outputs.paused == 'false'
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
 
       # claude-code-action@v1 이 exit code 2 로 실패해 CLI 직접 호출로 바꿈
       # (diag 로 CLI+토큰 정상 확인됨). Meta·Netlify 토큰·LAB 주소는 이 단계에 넘기지 않는다.
@@ -163,9 +163,13 @@ jobs:
         run: |
           if [ "${{ steps.lab.outcome }}" != "success" ]; then echo "result=no-build" >> "$GITHUB_OUTPUT"; echo "LAB 빌드 없음 — 배포 안 함"; exit 0; fi
           if [ -z "$NETLIFY_AUTH_TOKEN" ] || [ -z "$NETLIFY_LAB_SITE_ID" ]; then echo "result=skipped" >> "$GITHUB_OUTPUT"; echo "Netlify 설정 없음 — LAB 배포 건너뜀"; exit 0; fi
+          # 무료 플랜은 본 배포마다 크레딧 15 (한 달 300, LIVE 와 같이 씀). 화면·커넥터가 그대로면 올리지 않는다 (2026-11-21)
+          SRC=$(find app netlify/functions scripts/build_lab.py -type f | sort | xargs sha1sum | sha1sum | cut -c1-12)
+          LIVE_TITLE=$(curl -s -m 20 -H "Authorization: Bearer $NETLIFY_AUTH_TOKEN" "https://api.netlify.com/api/v1/sites/$NETLIFY_LAB_SITE_ID" | jq -r '.published_deploy.title // ""')
+          if echo "$LIVE_TITLE" | grep -q "src:$SRC"; then echo "result=unchanged" >> "$GITHUB_OUTPUT"; echo "LAB 화면 변경 없음 (src:$SRC) — 배포 안 함"; exit 0; fi
           if npx -y netlify-cli@latest deploy --dir=build/lab --functions=netlify/functions --prod \
                --site="$NETLIFY_LAB_SITE_ID" --auth="$NETLIFY_AUTH_TOKEN" \
-               --message="LAB ${{ steps.today.outputs.date }}"; then
+               --message="LAB ${{ steps.today.outputs.date }} src:$SRC"; then
             echo "result=deployed" >> "$GITHUB_OUTPUT"
           else
             echo "result=failed" >> "$GITHUB_OUTPUT"

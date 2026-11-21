@@ -2,8 +2,15 @@ name: LAB Deploy (수시)
 
 # 비정기 업데이트용: 의장 요청을 낮에 바로 반영할 때, AI 팀 사이클 없이 app/ 을 LAB 에만 다시 올린다.
 # LIVE 는 건드리지 않는다 (LIVE 는 promote-live.yml, 의장 버튼). 매일 사이클과 겹치지 않게 같은 줄을 선다.
+# alias 를 넣으면 ownstreet.team 은 그대로 두고 시험 주소(별칭--ownstreet-lab.netlify.app)에만 올린다.
+# Netlify 무료 플랜은 본 배포(--prod)마다 크레딧 15를 쓰고, 시험 주소 배포는 쓰지 않는다 (2026-11-21 확인).
 on:
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      alias:
+        description: "시험 주소 별칭 (비우면 ownstreet.team 본 배포)"
+        required: false
+        default: ""
 
 permissions:
   contents: read
@@ -31,11 +38,20 @@ jobs:
         with:
           node-version: "22"
       - name: Deploy to LAB site
+        id: deploy
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_LAB_SITE_ID: ${{ secrets.NETLIFY_LAB_SITE_ID }}
+          ALIAS: ${{ github.event.inputs.alias }}
         run: |
-          npx -y netlify-cli@latest deploy --dir=build/lab --prod \
-            --site="$NETLIFY_LAB_SITE_ID" --auth="$NETLIFY_AUTH_TOKEN" \
-            --message="LAB 수시 반영 $(TZ=Asia/Seoul date '+%F %H:%M')" --debug 2>&1 | tail -60
-          test "${PIPESTATUS[0]}" = "0"
+          if [ -n "$ALIAS" ]; then TARGET="--alias=$ALIAS"; else TARGET="--prod"; fi
+          SRC=$(find app netlify/functions scripts/build_lab.py -type f | sort | xargs sha1sum | sha1sum | cut -c1-12)
+          npx -y netlify-cli@latest deploy --dir=build/lab --functions=netlify/functions $TARGET \
+            --site="$NETLIFY_LAB_SITE_ID" --auth="$NETLIFY_AUTH_TOKEN" --json \
+            --message="LAB 수시 반영 $(TZ=Asia/Seoul date '+%F %H:%M') src:$SRC" > deploy.json
+          if [ -n "$ALIAS" ]; then URL=$(jq -r '.deploy_url' deploy.json); else URL="https://ownstreet.team"; fi
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+          echo "배포 주소: $URL"
+          jq -r '"함수: " + ((.function_logs // .logs // "") | tostring)' deploy.json | head -c 300; echo
+      - name: Smoke test (커넥터·페이지 응답 확인)
+        run: bash scripts/smoke_mcp.sh "${{ steps.deploy.outputs.url }}"

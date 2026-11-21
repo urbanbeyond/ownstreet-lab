@@ -3,7 +3,7 @@
 디플로이 픽션 — "AI 코드가 실행되면, 소설은 현실이 된다." 소설이 거짓말하지 않게 하는 장치.
 
 환경변수
-  DEPLOY_RESULT : deployed | failed | skipped | no-build
+  DEPLOY_RESULT : deployed | unchanged | failed | skipped | no-build
   MODE          : work | meeting
 """
 
@@ -34,6 +34,8 @@ def stamp_line(result: str, mode: str, version: str) -> str:
         return f"▶ no deploy · 회의의 날 · {now} — 오늘은 코드 대신 말이 오갔다."
     if result == "deployed":
         return f"▶ deploy · LAB{ver} · {now} — 코드가 실행됐다."
+    if result == "unchanged":
+        return f"▶ no deploy · LAB{ver} · {now} — 화면이 바뀌지 않아 그대로 두었다."
     if result == "failed":
         return f"▶ deploy failed · LAB{ver} · {now} — 오늘 코드는 실행되지 못했다."
     if result == "no-build":
