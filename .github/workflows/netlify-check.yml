@@ -16,18 +16,19 @@ jobs:
           T: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           S: ${{ secrets.NETLIFY_LAB_SITE_ID }}
         run: |
-          echo "== 토큰으로 내 계정 조회 =="
-          curl -s -o u.json -w "HTTP %{http_code}\n" -H "Authorization: Bearer $T" https://api.netlify.com/api/v1/user
-          jq -r '{has_email: (.email != null), created_at, last_login}' u.json 2>/dev/null || head -c 300 u.json
-          echo "== LAB 사이트 조회 =="
-          curl -s -o s.json -w "HTTP %{http_code}\n" -H "Authorization: Bearer $T" "https://api.netlify.com/api/v1/sites/$S"
-          jq -r '{name, state, url, published_deploy_state: .published_deploy.state, account_slug, capabilities_keys: ((.capabilities // {}) | keys), plan, disabled: .disabled, managed_dns}' s.json 2>/dev/null || head -c 300 s.json
-          echo "== 계정(팀) 조회 =="
-          curl -s -o a.json -w "HTTP %{http_code}\n" -H "Authorization: Bearer $T" https://api.netlify.com/api/v1/accounts
-          jq -r '.[] | {slug, type_name, billing_period, roles_allowed, enforce_saml, capabilities: (.capabilities // {} | with_entries(.value |= (if type=="object" then (.used|tostring)+"/"+(.included|tostring) else . end)))}' a.json 2>/dev/null || head -c 500 a.json
-          echo "== 크레딧 원본 =="
-          jq -c '.[] | .capabilities.credits' a.json
-          echo "== 이번 달 배포 수 (LAB) =="
-          curl -s -H "Authorization: Bearer $T" "https://api.netlify.com/api/v1/sites/$S/deploys?per_page=100" | jq -r '[.[] | select(.created_at >= "2026-11-01")] | "11월 배포 \(length)건, ready \([.[]|select(.state=="ready")]|length)건"'
-          echo "== 최근 배포 3개 =="
-          curl -s -H "Authorization: Bearer $T" "https://api.netlify.com/api/v1/sites/$S/deploys?per_page=3" | jq -r '.[] | {created_at, state, error_message, title}' 2>/dev/null
+          H="Authorization: Bearer $T"
+          echo "== 계정 키 목록 =="
+          curl -s -H "$H" https://api.netlify.com/api/v1/accounts > a.json
+          jq -r '.[] | keys | join(", ")' a.json
+          jq -c '.[] | {slug, type_name, billing_period, current_billing_period_start, next_billing_period_start, capabilities}' a.json
+          echo "== 이 토큰으로 보이는 모든 사이트 =="
+          curl -s -H "$H" "https://api.netlify.com/api/v1/sites?per_page=100" | jq -r '.[] | "\(.name) | \(.url) | state=\(.state) | account=\(.account_slug) | disabled=\(.disabled // false)"'
+          echo "== LAB 사이트 전체 키 중 상태 관련 =="
+          curl -s -H "$H" "https://api.netlify.com/api/v1/sites/$S" | jq -c '{state, disabled, suspended: .suspended, paused: .paused, build_settings_stopped: .build_settings.stop_builds, published_deploy_at: .published_deploy.published_at}'
+          echo "== 이번 달 모든 사이트 배포 수 =="
+          for id in $(curl -s -H "$H" "https://api.netlify.com/api/v1/sites?per_page=100" | jq -r '.[].id'); do
+            curl -s -H "$H" "https://api.netlify.com/api/v1/sites/$id/deploys?per_page=100" | jq -r --arg id "$id" '[.[] | select(.created_at >= "2026-11-01")] | "\(.[0].name // $id): 11월 \(length)건 (prod \([.[]|select(.context=="production")]|length))"'
+          done
+          echo "== 시험 배포 생성 (파일 없이 draft, 응답만 확인) =="
+          curl -s -o d.json -w "HTTP %{http_code}\n" -X POST -H "$H" -H "Content-Type: application/json" -d '{"files":{},"draft":true}' "https://api.netlify.com/api/v1/sites/$S/deploys"
+          jq -c '{code, message, state, error_message}' d.json 2>/dev/null || head -c 400 d.json
