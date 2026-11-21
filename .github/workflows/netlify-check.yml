@@ -1,0 +1,29 @@
+name: Netlify 상태 확인 (진단용)
+
+# LAB 배포가 Forbidden 으로 실패할 때 원인을 보려고 만든 일회성 진단. 비밀값은 출력하지 않는다.
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Netlify API 응답 확인
+        env:
+          T: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          S: ${{ secrets.NETLIFY_LAB_SITE_ID }}
+        run: |
+          echo "== 토큰으로 내 계정 조회 =="
+          curl -s -o u.json -w "HTTP %{http_code}\n" -H "Authorization: Bearer $T" https://api.netlify.com/api/v1/user
+          jq -r '{has_email: (.email != null), created_at, last_login}' u.json 2>/dev/null || head -c 300 u.json
+          echo "== LAB 사이트 조회 =="
+          curl -s -o s.json -w "HTTP %{http_code}\n" -H "Authorization: Bearer $T" "https://api.netlify.com/api/v1/sites/$S"
+          jq -r '{name, state, url, published_deploy_state: .published_deploy.state, account_slug, capabilities_keys: ((.capabilities // {}) | keys), plan, disabled: .disabled, managed_dns}' s.json 2>/dev/null || head -c 300 s.json
+          echo "== 계정(팀) 조회 =="
+          curl -s -o a.json -w "HTTP %{http_code}\n" -H "Authorization: Bearer $T" https://api.netlify.com/api/v1/accounts
+          jq -r '.[] | {slug, type_name, billing_period, roles_allowed, enforce_saml, capabilities: (.capabilities // {} | with_entries(.value |= (if type=="object" then (.used|tostring)+"/"+(.included|tostring) else . end)))}' a.json 2>/dev/null || head -c 500 a.json
+          echo "== 최근 배포 3개 =="
+          curl -s -H "Authorization: Bearer $T" "https://api.netlify.com/api/v1/sites/$S/deploys?per_page=3" | jq -r '.[] | {created_at, state, error_message, title}' 2>/dev/null
