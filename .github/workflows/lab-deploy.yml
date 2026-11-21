@@ -35,7 +35,7 @@ jobs:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_LAB_SITE_ID: ${{ secrets.NETLIFY_LAB_SITE_ID }}
         run: |
-          npx -y netlify-cli@latest deploy --dir=build/lab --functions=netlify/functions --prod \
+          npx -y netlify-cli@latest deploy --dir=build/lab --prod \
             --site="$NETLIFY_LAB_SITE_ID" --auth="$NETLIFY_AUTH_TOKEN" \
             --message="LAB 수시 반영 $(TZ=Asia/Seoul date '+%F %H:%M')" --debug 2>&1 | tail -60
           test "${PIPESTATUS[0]}" = "0"
