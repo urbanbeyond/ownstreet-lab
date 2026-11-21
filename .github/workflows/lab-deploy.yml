@@ -29,7 +29,7 @@ jobs:
         run: python scripts/build_lab.py
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
       - name: Deploy to LAB site
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
@@ -37,4 +37,5 @@ jobs:
         run: |
           npx -y netlify-cli@latest deploy --dir=build/lab --functions=netlify/functions --prod \
             --site="$NETLIFY_LAB_SITE_ID" --auth="$NETLIFY_AUTH_TOKEN" \
-            --message="LAB 수시 반영 $(TZ=Asia/Seoul date '+%F %H:%M')"
+            --message="LAB 수시 반영 $(TZ=Asia/Seoul date '+%F %H:%M')" --debug 2>&1 | tail -60
+          test "${PIPESTATUS[0]}" = "0"
