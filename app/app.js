@@ -246,9 +246,7 @@ const QUESTIONS = {
     label: '이미지 링크',
     ask: 'OWN STREET입니다.\n만들어 둔 이미지가 있는 채팅 링크를 보내주세요.\n공개 링크만 받을 수 있어요.',
     input: { type: 'text', inputmode: 'url', placeholder: 'https://...', maxlength: 2000, autocomplete: 'off', autocapitalize: 'off' },
-    skip: '건너뛰기',
-    // 링크 없이 진행: 이미지는 접수 후 카카오톡 채널로 받는다 (2026-11-26 의장 요청)
-    afterSkip: '괜찮아요. 링크 없이 진행할게요.\n이미지는 접수 후 카카오톡 채널로 접수번호와 함께 보내주세요.',
+    optional: true, // 링크 없이 진행하면 이미지는 접수 후 카카오톡 채널로 받는다 (R-044)
     parse(raw) {
       if (String(raw).trim() === '') return { value: '' };
       const v = normalizeUrl(raw);
@@ -259,7 +257,7 @@ const QUESTIONS = {
     label: '한 줄 이야기',
     ask: '이 이미지, 어떤 마음으로 만들었어요?\n한 줄로 적어주면 접수번호 받을 때 같이 보여드릴게요.\n건너뛰어도 괜찮아요.',
     input: { type: 'text', placeholder: '예) 처음으로 내가 정한 나의 색', maxlength: 200, autocomplete: 'off' },
-    skip: '건너뛰기',
+    optional: true,
     parse(raw) {
       if (cleanText(raw, 1, 9999) === '') return { value: '' };
       const v = cleanText(raw, 1, 200);
@@ -304,7 +302,7 @@ const QUESTIONS = {
     label: '배송 요청',
     ask: '배송 요청사항이 있으면 적어주세요.',
     input: { type: 'text', placeholder: '예) 부재 시 문 앞에 두세요', maxlength: 300, autocomplete: 'off' },
-    skip: '없음',
+    optional: true,
     parse(raw) {
       if (cleanText(raw, 1, 9999) === '') return { value: '' };
       const v = cleanText(raw, 1, 300);
@@ -394,6 +392,7 @@ async function askStep(step, instant) {
     const choices = SIZES.map((s) => ({ label: s, size: true, onPick: () => answer('size', s) }));
     choices.push({ label: '사이즈표 보기', ghost: true, keep: true, onPick: () => $('sizeDialog').showModal() });
     setChoices(choices);
+    $('chatInput').append(navRow(step));
   } else {
     setTextInput(q, (raw) => answer(step, raw));
   }
@@ -403,7 +402,7 @@ async function answer(step, raw) {
   if (chat.busy || chat.step !== step) return;
   const q = QUESTIONS[step];
   const text = String(raw == null ? '' : raw);
-  if (!q.skip && text.trim() === '') { focusComposer(); return; }
+  if (!q.optional && text.trim() === '') { focusComposer(); return; }
 
   const res = q.parse(text);
   chat.active = true;
@@ -419,9 +418,56 @@ async function answer(step, raw) {
   meSay(displayValue(step, res.value));
   chat.step = null;
   setComposerNone();
+  await advanceFrom(step);
+}
 
-  if (q.afterSkip && !res.value) await botSay(q.afterSkip);
+/* [이전]·[다음] (R-044): 입력하지 않아도 다음으로 넘어가고, 언제든 앞 질문으로 돌아간다.
+   꼭 필요한 항목(사이즈·신청자명·연락처·주소)은 주문하기 직전에 확인한다. */
+async function goNext(step, typed) {
+  if (chat.busy || chat.step !== step) return;
+  if (typed && String(typed).trim()) { await answer(step, typed); return; } // 적어 둔 게 있으면 보내기와 같다
+  chat.active = true;
+  if (!(step in chat.data)) chat.data[step] = '';
+  saveDraft();
+  meSay('다음');
+  chat.step = null;
+  setComposerNone();
+  await advanceFrom(step);
+}
 
+async function goPrev(step) {
+  if (chat.busy || chat.step !== step) return;
+  const idx = STEPS.indexOf(step);
+  if (idx <= 0) return;
+  chat.active = true;
+  meSay('이전');
+  chat.step = null;
+  setComposerNone();
+  await askStep(STEPS[idx - 1]);
+}
+
+function navRow(step, getTyped) {
+  const row = el('div', 'choices nav-row');
+  const idx = STEPS.indexOf(step);
+  const prev = el('button', 'choice', '이전');
+  prev.type = 'button';
+  prev.id = 'chatPrev';
+  prev.disabled = idx <= 0;
+  prev.addEventListener('click', () => goPrev(step));
+  const next = el('button', 'choice', '다음');
+  next.type = 'button';
+  next.id = 'chatNext';
+  next.addEventListener('click', () => goNext(step, getTyped ? getTyped() : ''));
+  row.append(prev, next);
+  return row;
+}
+
+const REQUIRED_STEPS = ['size', 'name', 'phone', 'address'];
+function missingRequired() {
+  return REQUIRED_STEPS.filter((st) => !chat.data[st]);
+}
+
+async function advanceFrom(step) {
   if (chat.editing) { chat.editing = false; await showConfirm(); return; }
   const idx = STEPS.indexOf(step);
   const next = STEPS[idx + 1];
@@ -442,6 +488,20 @@ async function askLogin() {
   await botSay('이제부터는 신청자명·연락처·주소를 여쭤봅니다.\n접수 확인을 위해 Google 로그인이 필요합니다.');
   if (chat.step !== 'login') return;
   showLoginChoice(() => askStep('name'));
+  // 로그인 앞에서도 앞 질문으로 돌아갈 수 있게 (R-044)
+  const back = el('button', 'choice', '이전');
+  back.type = 'button';
+  back.id = 'chatPrev';
+  back.addEventListener('click', async () => {
+    if (chat.busy || chat.step !== 'login') return;
+    meSay('이전');
+    chat.step = null;
+    setComposerNone();
+    await askStep(STEPS[STEPS.indexOf('name') - 1]);
+  });
+  const row = el('div', 'choices nav-row');
+  row.append(back);
+  if (!CFG.labPreview) $('chatInput').append(row);
 }
 
 function showLoginChoice(onDone) {
@@ -473,6 +533,7 @@ function showLoginChoice(onDone) {
 function displayValue(step, value) {
   if ((step === 'memo' || step === 'story') && !value) return '건너뛰기';
   if (step === 'url' && !value) return '건너뛰기 (이미지는 카카오톡으로)';
+  if (!value) return '미입력';
   return value;
 }
 
@@ -528,6 +589,12 @@ async function showConfirm(instant) {
   order.type = 'button';
   order.id = 'orderBtn';
   order.addEventListener('click', () => {
+    const missing = missingRequired();
+    if (missing.length) {
+      consentErr.textContent = '아직 입력하지 않은 항목이 있어요: ' + missing.map((st) => QUESTIONS[st].label).join(', ') + '. 각 항목의 "수정"을 눌러 채워주세요.';
+      consentErr.hidden = false;
+      return;
+    }
     if (!cb.checked) {
       consentErr.textContent = '개인정보 수집 및 이용에 동의해주세요.';
       consentErr.hidden = false;
@@ -1019,14 +1086,10 @@ function setTextInput(q, onSubmit) {
   });
   box.append(form);
 
-  if (q.skip) {
-    const row = el('div', 'choices');
-    const skip = el('button', 'choice', q.skip);
-    skip.type = 'button';
-    skip.id = 'chatSkip';
-    skip.addEventListener('click', () => onSubmit(''));
-    row.append(skip);
-    box.append(row);
+  const step = chat.step;
+  if (STEPS.includes(step)) {
+    if (typeof chat.data[step] === 'string' && chat.data[step]) input.value = chat.data[step];
+    box.append(navRow(step, () => input.value));
   }
   keepInView();
   focusComposer();
@@ -1094,6 +1157,7 @@ function loadDraft() {
     const data = {};
     for (const step of STEPS) {
       if (!(step in raw.data)) break;
+      if (raw.data[step] === '') { data[step] = ''; continue; } // [다음]으로 비워 둔 항목 (R-044)
       const res = QUESTIONS[step].parse(String(raw.data[step]));
       if (res.error) break;
       data[step] = res.value;

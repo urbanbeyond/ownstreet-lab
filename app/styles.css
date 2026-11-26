@@ -409,6 +409,9 @@ details[open] .acc-sign { transform: rotate(45deg); }
 }
 .send:active { transform: translate(2px, 2px); }
 .composer + .choices { margin-top: 10px; }
+.choices + .nav-row { margin-top: 10px; }
+.nav-row .choice { min-width: 76px; justify-content: center; }
+.choice:disabled { opacity: 0.35; cursor: default; box-shadow: none; transform: none; }
 
 .choices { display: flex; flex-wrap: wrap; gap: 10px; }
 .choice {
