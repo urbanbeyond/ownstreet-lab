@@ -246,7 +246,11 @@ const QUESTIONS = {
     label: '이미지 링크',
     ask: 'OWN STREET입니다.\n만들어 둔 이미지가 있는 채팅 링크를 보내주세요.\n공개 링크만 받을 수 있어요.',
     input: { type: 'text', inputmode: 'url', placeholder: 'https://...', maxlength: 2000, autocomplete: 'off', autocapitalize: 'off' },
+    skip: '건너뛰기',
+    // 링크 없이 진행: 이미지는 접수 후 카카오톡 채널로 받는다 (2026-11-26 의장 요청)
+    afterSkip: '괜찮아요. 링크 없이 진행할게요.\n이미지는 접수 후 카카오톡 채널로 접수번호와 함께 보내주세요.',
     parse(raw) {
+      if (String(raw).trim() === '') return { value: '' };
       const v = normalizeUrl(raw);
       return v ? { value: v } : { error: '링크 형식이 아닙니다.\nhttps:// 로 시작하는 주소를 붙여넣어 주세요.' };
     }
@@ -416,6 +420,8 @@ async function answer(step, raw) {
   chat.step = null;
   setComposerNone();
 
+  if (q.afterSkip && !res.value) await botSay(q.afterSkip);
+
   if (chat.editing) { chat.editing = false; await showConfirm(); return; }
   const idx = STEPS.indexOf(step);
   const next = STEPS[idx + 1];
@@ -466,6 +472,7 @@ function showLoginChoice(onDone) {
 
 function displayValue(step, value) {
   if ((step === 'memo' || step === 'story') && !value) return '건너뛰기';
+  if (step === 'url' && !value) return '건너뛰기 (이미지는 카카오톡으로)';
   return value;
 }
 
@@ -739,7 +746,7 @@ async function postRequest(pending, forceRefresh) {
         idToken,
         name: pending.data.name,
         phone: pending.data.phone,
-        url: pending.data.url,
+        url: pending.data.url || noImageMarkUrl(),
         size: pending.data.size,
         address: pending.data.address,
         memo: pending.data.memo || '',
@@ -851,6 +858,9 @@ function showComplete(id, extraNote) {
   no.id = 'receiptNo';
   done.append(kicker, el('p', 'done-title', '접수됐습니다.'), el('p', 'modal-sub', '접수번호'), no,
     el('p', 'done-text', '확인 후 연락드리겠습니다.'));
+  if (!chat.data.url) {
+    done.append(el('p', 'done-text', '이미지는 카카오톡 채널로 접수번호 ' + id + ' 와 함께 보내주세요.'));
+  }
   if (chat.data.story) {
     done.append(el('p', 'done-story-label', '당신의 스트릿'));
     done.append(el('p', 'done-story', '"' + chat.data.story + '"'));
@@ -901,7 +911,7 @@ function showComplete(id, extraNote) {
       if (!ok) botNow('복사하지 못했습니다.\n접수번호를 길게 눌러 복사해주세요.', 'warn');
     }
   }];
-  if (contactUrl()) choices.push({ label: '카톡 문의', href: contactUrl() });
+  if (contactUrl()) choices.push({ label: chat.data.url ? '카톡 문의' : '카톡으로 이미지 보내기', href: contactUrl(), primary: !chat.data.url });
   choices.push({ label: '새 주문', id: 'newOrderBtn', onPick: () => resetChat(true) });
   setChoices(choices);
   $('chatReset').hidden = true;
@@ -1102,6 +1112,13 @@ function clearSessionData() {
 /* ============================================================
    공통 도구
    ============================================================ */
+
+/** 이미지 링크를 건너뛴 주문의 링크 칸 값. 가짜 이미지 주소가 아니라 "카톡으로 받기"라는 표시다.
+ *  (LIVE 접수 서버는 링크 칸을 필수로 확인하므로, 서버 배포 없이 이렇게 표시한다) */
+function noImageMarkUrl() {
+  const base = contactUrl() || location.origin + '/';
+  return base.split('#')[0] + '#링크없음-카톡으로받기';
+}
 
 function contactUrl() {
   const u = String(CFG.contactUrl || '').trim();
