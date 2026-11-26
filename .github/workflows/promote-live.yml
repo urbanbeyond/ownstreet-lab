@@ -30,6 +30,8 @@ jobs:
       - name: Confirm
         run: |
           if [ "${{ github.event.inputs.confirm }}" != "LIVE" ]; then echo "확인 문구가 LIVE 가 아님 — 중단"; exit 1; fi
+          # R-033: 개편 전까지 LIVE(ownstreet.life)는 티셔츠 주문 그대로. main 의 app/ 은 내가브랜드라 LIVE 에 올리면 주문이 사라진다
+          if [ "${{ github.ref_name }}" != "live-tee" ]; then echo "LIVE 는 개편 전까지 live-tee 브랜치에서만 반영합니다 (R-033). Run workflow 에서 브랜치를 live-tee 로 고르세요 — 중단"; exit 1; fi
 
       - uses: actions/checkout@v4
 
